@@ -85,6 +85,7 @@ From left to right across the navigation bar:
 * **Template Dropdown:** When creating a note, choose to initialize it with a structured template (*Meeting*, *Project*, *Book Note*, *Weekly Review*, etc.) or start with a blank page.
 
 ### Drag-and-Drop Organization:
+* **Collapsible Sections (Tags & Recently Opened):** Click on the **Tags** or **Recently Opened** headers in the left sidebar to collapse or expand them, freeing up vertical space for your folder tree. Your preferences are saved automatically.
 * Drag a note into a folder to organize it.
 * Drag a folder into another folder to create an infinite hierarchy (with built-in circular reference protection).
 * Drag an item onto the **Workspace Root** row at the very top to move it back to the root level.
@@ -199,7 +200,8 @@ Accessible via **`F11`** ou **`Cmd + Shift + F`**:
 
 ### PlantUML Diagrams:
 * Write a `[plantuml]` block in AsciiDoc or a ` ```plantuml ` block in Markdown.
-* If a local Kroki container is running (`http://localhost:8000`), the diagram is converted into high-resolution SVG in real time.
+* **Local Container (Default & Recommended):** If a local Kroki container is running (`http://localhost:8000`), the diagram compiles into high-resolution SVG in real time completely offline and with zero data leakage (`docker run -d -p 8000:8000 yuzutech/kroki`).
+* **Public Server Option (`https://kroki.io`):** Available in Settings (⚙️). Activating it requires acknowledging a **Security & Privacy Warning Modal** regarding sensitive architecture or credential exposure. To protect your data, this option is **strictly session-only and non-persistent** (automatically resets to Local Container on reload).
 * In the absence of a server, an interactive badge lets you edit or collapse the source code.
 
 ### Visual Table Editor:
@@ -330,6 +332,7 @@ De gauche à droite dans la barre de navigation :
 * **Menu déroulant Template :** Lors de la création, tu peux choisir d'initialiser ta note avec un modèle structuré (*Meeting*, *Projet*, *Lecture*, *Revue*, etc.) ou une page vierge.
 
 ### Organisation par Glisser-Déposer (*Drag & Drop*) :
+* **Sections rétractables (Tags & Récemment ouverts) :** Clique sur l'en-tête **Tags** ou **Recently Opened** dans le panneau gauche pour les replier ou les déplier à volonté afin d'optimiser l'espace vertical pour ton arborescence. Tes préférences sont conservées d'une session à l'autre.
 * Glisse une note vers un dossier pour l'y ranger.
 * Glisse un dossier dans un autre dossier pour créer une hiérarchie infinie (avec protection anti-boucle circulaire intégrée).
 * Glisse un élément sur la ligne **Workspace Root** tout en haut pour le replacer à la racine.
@@ -444,7 +447,8 @@ Accessible via **`F11`** ou **`Cmd + Shift + F`** :
 
 ### Diagrammes PlantUML :
 * Écris un bloc `[plantuml]` en AsciiDoc ou ` ```plantuml ` en Markdown.
-* Si un conteneur local Kroki tourne (`http://localhost:8000`), le diagramme est converti en SVG haute résolution en temps réel.
+* **Conteneur Local (Recommandé & par défaut) :** Si un conteneur local Kroki tourne (`http://localhost:8000`), le diagramme est converti en SVG haute résolution en temps réel, 100% hors-ligne et en toute confidentialité (`docker run -d -p 8000:8000 yuzutech/kroki`).
+* **Option Serveur Public (`https://kroki.io`) :** Disponible dans les Paramètres (⚙️). Son activation requiert la validation d'un **modal d'avertissement de sécurité** sur l'exposition de données sensibles sur Internet. Pour votre sécurité, ce choix est **strictement temporaire (non-persistant)** et repasse automatiquement sur le conteneur local au moindre rechargement de page.
 * En l'absence de serveur, un badge interactif te permet d'éditer ou de replier le code source.
 
 ### Éditeur Visuel de Tableaux :

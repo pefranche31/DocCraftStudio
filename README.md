@@ -54,7 +54,8 @@ DocCraft Studio was built and refined through **vibe coding**—a collaborative 
   * 📋 Copy SVG directly to clipboard in one click
   * 💾 Download diagram as an independent SVG image file
   * 👁️ Quick toggle between rendered diagram and underlying source code
-* **Local & Private**: Powered by a local Kroki container (`docker run -d -p 8000:8000 yuzutech/kroki`) with smart client-side SVG caching.
+* **Local Container by Default**: 100% offline and confidential by default via a local Docker container (`docker run -d -p 8000:8000 yuzutech/kroki`) with instant SVG caching.
+* **Public Server Option with Security Warning**: Switch to the public cloud service (`https://kroki.io`) with a mandatory security warning modal. For privacy, this option is **strictly session-only and non-persistent** (automatically resets to Local Container on reload).
 
 ### 🌐 Bi-directional WikiLinks & Knowledge Graph
 * **Obsidian-style `[[WikiLinks]]`**: Instant auto-completion popup as soon as you type `[[`. Supports aliases (`[[Target Note|Custom Label]]`).
@@ -64,6 +65,7 @@ DocCraft Studio was built and refined through **vibe coding**—a collaborative 
 ### 🔒 100% Offline & Local-First
 * **Zero cloud, zero telemetry**: All notes, folders, and assets live safely in your browser's IndexedDB storage.
 * Works completely without an Internet connection (all vendor assets, fonts, and scripts are locally bundled).
+* **Collapsible Sidebar Sections**: Click **Tags** or **Recently Opened** in the left sidebar to fold/unfold them, freeing up vertical space for your notebook tree.
 * **One-Click Backups**: Export your entire vault as a clean `.zip` archive containing raw `.adoc`/`.md` files or a structured JSON snapshot.
 
 ### ✅ Two-Way Interactive Task Hub

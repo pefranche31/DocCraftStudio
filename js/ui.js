@@ -426,6 +426,9 @@ function openSettingsModal() {
   if (specialsColorInput) specialsColorInput.value = customColorSpecialsValue;
 
   syncSettingsThemeToggle();
+  if (typeof syncKrokiSettingsUI === 'function') {
+    syncKrokiSettingsUI();
+  }
   openModal('settingsModal');
 }
 

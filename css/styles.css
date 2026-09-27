@@ -689,6 +689,8 @@
   #linkModal,
   #admonitionModal,
   #convertModal,
+  #settingsModal,
+  #publicKrokiWarningModal,
   #krokiModal {
     display: none !important;
   }

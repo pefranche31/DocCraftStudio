@@ -1343,15 +1343,43 @@
           </div>
         </div>
 
-        <!-- SECTION 3: Kroki Diagram Engine -->
+        <!-- SECTION 3: PlantUML / Kroki Diagram Engine -->
         <div class="space-y-3">
-          <span class="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide">Kroki Diagram Engine</span>
+          <div class="flex items-center justify-between">
+            <span class="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide">PlantUML / Kroki Engine</span>
+            <span id="krokiServerModeBadge" class="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">Local (Offline)</span>
+          </div>
           <div class="space-y-3 p-3 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-200/60 dark:border-slate-700/60 text-xs">
+            <!-- Server Mode Selector -->
             <div>
-              <label class="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1">Local Container Server URL</label>
+              <label class="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Server Mode</label>
+              <div class="grid grid-cols-2 gap-2">
+                <button type="button" id="krokiModeLocalBtn" onclick="selectKrokiServerMode('local')" class="px-3 py-2 rounded-lg border text-left flex items-center gap-2 transition cursor-pointer bg-white dark:bg-slate-800 border-indigo-500 ring-2 ring-indigo-500/20 text-slate-800 dark:text-slate-100 shadow-sm">
+                  <i class="fa-solid fa-shield-halved text-emerald-500 text-sm shrink-0"></i>
+                  <div class="min-w-0">
+                    <div class="font-bold text-[11px] leading-tight">Local Container</div>
+                    <div class="text-[10px] text-slate-400 dark:text-slate-500 truncate">100% Offline & Private</div>
+                  </div>
+                </button>
+                <button type="button" id="krokiModePublicBtn" onclick="selectKrokiServerMode('public')" class="px-3 py-2 rounded-lg border text-left flex items-center gap-2 transition cursor-pointer bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 shadow-sm">
+                  <i class="fa-solid fa-globe text-amber-500 text-sm shrink-0"></i>
+                  <div class="min-w-0">
+                    <div class="font-bold text-[11px] leading-tight">Public Server</div>
+                    <div class="text-[10px] text-slate-400 dark:text-slate-500 truncate">kroki.io (Session only)</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <!-- Server URL Input -->
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-[10px] font-semibold text-slate-500 dark:text-slate-400">Server Endpoint URL</label>
+                <span class="text-[10px] text-slate-400 dark:text-slate-500">Supports Kroki & PlantUML</span>
+              </div>
               <div class="flex gap-2">
-                <input id="krokiServerUrl" type="url" placeholder="http://localhost:8000" oninput="saveKrokiConfig()" onchange="saveKrokiConfig()" class="flex-1 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 font-mono text-xs focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 dark:text-slate-200">
-                <button onclick="testKrokiConnection()" class="px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-[10px] font-bold border border-slate-200 dark:border-slate-600 transition flex items-center gap-1 shrink-0 select-none shadow-sm">
+                <input id="krokiServerUrl" type="url" placeholder="http://localhost:8000" oninput="handleKrokiUrlInput()" onchange="handleKrokiUrlChange()" class="flex-1 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 font-mono text-xs focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 dark:text-slate-200">
+                <button type="button" onclick="testKrokiConnection()" class="px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-[10px] font-bold border border-slate-200 dark:border-slate-600 transition flex items-center gap-1 shrink-0 select-none shadow-sm cursor-pointer">
                   <i class="fa-solid fa-bolt text-amber-500"></i>
                   <span>Test</span>
                 </button>
@@ -1369,6 +1397,60 @@
       <!-- Footer Actions -->
       <div class="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700 flex justify-end shrink-0">
         <button onclick="closeModal('settingsModal')" class="px-4 py-2 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Public PlantUML Server Security Warning -->
+  <div id="publicKrokiWarningModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-amber-300 dark:border-amber-600/60 flex flex-col space-y-4">
+      
+      <!-- Warning Header -->
+      <div class="flex items-start gap-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-950/80 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 text-xl shadow-inner">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <div class="flex-1">
+          <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 leading-tight">
+            Security & Privacy Warning
+          </h3>
+          <p class="text-xs text-amber-600 dark:text-amber-400 font-semibold mt-0.5">
+            Public PlantUML / Kroki Cloud Server
+          </p>
+        </div>
+      </div>
+
+      <!-- Warning Body -->
+      <div class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed space-y-2.5 bg-amber-50/70 dark:bg-amber-950/30 p-3.5 rounded-xl border border-amber-200/80 dark:border-amber-800/40">
+        <p>
+          You are about to switch diagram rendering to the public cloud service at <strong class="font-mono text-slate-800 dark:text-slate-100">https://kroki.io</strong>.
+        </p>
+        <p>
+          ⚠️ <strong>Sensitive Data Exposure Risk:</strong> Your diagram source code will be transmitted over the public Internet to a remote third-party server for compilation.
+        </p>
+        <ul class="list-disc list-inside space-y-1 pl-1 text-[11px] text-slate-500 dark:text-slate-400">
+          <li>Never use the public server if your diagrams contain <strong>internal hostnames, IP addresses, proprietary architecture, passwords, or confidential business logic</strong>.</li>
+          <li>Data transmitted over public networks may be subject to external logging or traffic inspection.</li>
+        </ul>
+        <div class="flex items-center gap-2 p-2 rounded-lg bg-amber-100/90 dark:bg-amber-900/40 text-amber-900 dark:text-amber-200 font-semibold text-[11px]">
+          <i class="fa-solid fa-clock-rotate-left text-amber-600 dark:text-amber-400"></i>
+          <span>Session only: automatically resets back to Local Container upon page reload for privacy.</span>
+        </div>
+        <p class="pt-1 text-[11px] text-slate-500 dark:text-slate-400">
+          💡 For 100% private, offline rendering, keep using a local Docker container: <br>
+          <code class="px-1.5 py-0.5 rounded bg-slate-200/70 dark:bg-slate-700 font-mono text-[10px] text-slate-700 dark:text-slate-200">docker run -d -p 8000:8000 yuzutech/kroki</code>
+        </p>
+      </div>
+
+      <!-- Actions -->
+      <div class="pt-2 flex items-center justify-end gap-2.5">
+        <button type="button" onclick="cancelPublicKrokiModal()" class="px-4 py-2 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer">
+          Cancel & Keep Local (Offline)
+        </button>
+        <button type="button" onclick="confirmPublicKrokiServer()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-amber-600 hover:bg-amber-700 text-white shadow-sm transition flex items-center gap-1.5 cursor-pointer">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <span>I Understand — Enable Public Server</span>
+        </button>
       </div>
     </div>
   </div>

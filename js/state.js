@@ -72,8 +72,18 @@ var selectedAttachmentFilename = null;
 
 try {
   const savedKroki = localStorage.getItem('kroki_url');
-  if (savedKroki) krokiBaseUrl = savedKroki.replace(/\/+$/, '');
-} catch(e) {}
+  // Never persist public cloud server across sessions: force local container default
+  if (savedKroki && !savedKroki.includes('kroki.io')) {
+    krokiBaseUrl = savedKroki.replace(/\/+$/, '');
+  } else {
+    krokiBaseUrl = 'http://localhost:8000';
+    if (savedKroki && savedKroki.includes('kroki.io')) {
+      localStorage.removeItem('kroki_url');
+    }
+  }
+} catch(e) {
+  krokiBaseUrl = 'http://localhost:8000';
+}
 
 try {
   forcePreviewLight = localStorage.getItem('force_preview_light') === 'true';

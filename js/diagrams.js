@@ -18,11 +18,127 @@ function updateKrokiBadge() {
   if (badgeLabel) {
     try {
       const parsed = new URL(krokiBaseUrl);
-      badgeLabel.innerText = `Kroki: ${parsed.port || '80'}`;
+      if (parsed.hostname === 'kroki.io') {
+        badgeLabel.innerText = 'Kroki (Public)';
+      } else {
+        badgeLabel.innerText = `Kroki: ${parsed.port || '80'}`;
+      }
     } catch(e) {
       badgeLabel.innerText = 'Kroki';
     }
   }
+}
+
+function syncKrokiSettingsUI() {
+  const urlInput = document.getElementById('krokiServerUrl');
+  if (urlInput) urlInput.value = krokiBaseUrl;
+
+  const localBtn = document.getElementById('krokiModeLocalBtn');
+  const publicBtn = document.getElementById('krokiModePublicBtn');
+  const modeBadge = document.getElementById('krokiServerModeBadge');
+
+  const activeBtnClasses = "px-3 py-2 rounded-lg border text-left flex items-center gap-2 transition cursor-pointer bg-white dark:bg-slate-800 border-indigo-500 ring-2 ring-indigo-500/20 text-slate-800 dark:text-slate-100 shadow-sm";
+  const inactiveBtnClasses = "px-3 py-2 rounded-lg border text-left flex items-center gap-2 transition cursor-pointer bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 shadow-sm";
+
+  const isPublic = krokiBaseUrl.includes('kroki.io');
+  const isLocal = krokiBaseUrl.includes('localhost') || krokiBaseUrl.includes('127.0.0.1');
+
+  if (localBtn) localBtn.className = isLocal ? activeBtnClasses : inactiveBtnClasses;
+  if (publicBtn) publicBtn.className = isPublic ? activeBtnClasses : inactiveBtnClasses;
+
+  if (modeBadge) {
+    if (isPublic) {
+      modeBadge.innerText = "Public (Cloud)";
+      modeBadge.className = "text-[10px] px-2 py-0.5 rounded-full font-semibold bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300";
+    } else if (isLocal) {
+      modeBadge.innerText = "Local (Offline)";
+      modeBadge.className = "text-[10px] px-2 py-0.5 rounded-full font-semibold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300";
+    } else {
+      modeBadge.innerText = "Custom Server";
+      modeBadge.className = "text-[10px] px-2 py-0.5 rounded-full font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300";
+    }
+  }
+}
+
+function selectKrokiServerMode(mode) {
+  if (mode === 'public') {
+    if (krokiBaseUrl === 'https://kroki.io') {
+      showToast("Public server is already active", true);
+      return;
+    }
+    // Open dedicated confirmation modal to highlight security and privacy risks
+    openModal('publicKrokiWarningModal');
+  } else if (mode === 'local') {
+    krokiBaseUrl = 'http://localhost:8000';
+    try { localStorage.setItem('kroki_url', krokiBaseUrl); } catch(e) {}
+    diagramSvgCache.clear();
+    syncKrokiSettingsUI();
+    updateKrokiBadge();
+    renderDocument();
+    showToast("Switched to Local Kroki Container (http://localhost:8000)", true);
+  }
+}
+
+function cancelPublicKrokiModal() {
+  closeModal('publicKrokiWarningModal');
+  syncKrokiSettingsUI();
+}
+
+function confirmPublicKrokiServer() {
+  krokiBaseUrl = 'https://kroki.io';
+  // Enforce non-persistent privacy: NEVER save public cloud server to localStorage
+  try { localStorage.removeItem('kroki_url'); } catch(e) {}
+  diagramSvgCache.clear();
+  closeModal('publicKrokiWarningModal');
+  syncKrokiSettingsUI();
+  updateKrokiBadge();
+  renderDocument();
+  showToast("Public Kroki Server enabled for this session (https://kroki.io)", true);
+}
+
+function handleKrokiUrlInput() {
+  const inputEl = document.getElementById('krokiServerUrl');
+  if (!inputEl) return;
+  const val = inputEl.value.trim();
+  const localBtn = document.getElementById('krokiModeLocalBtn');
+  const publicBtn = document.getElementById('krokiModePublicBtn');
+  const modeBadge = document.getElementById('krokiServerModeBadge');
+
+  const activeBtnClasses = "px-3 py-2 rounded-lg border text-left flex items-center gap-2 transition cursor-pointer bg-white dark:bg-slate-800 border-indigo-500 ring-2 ring-indigo-500/20 text-slate-800 dark:text-slate-100 shadow-sm";
+  const inactiveBtnClasses = "px-3 py-2 rounded-lg border text-left flex items-center gap-2 transition cursor-pointer bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 shadow-sm";
+
+  const isPublic = val.includes('kroki.io');
+  const isLocal = val.includes('localhost') || val.includes('127.0.0.1');
+
+  if (localBtn) localBtn.className = isLocal ? activeBtnClasses : inactiveBtnClasses;
+  if (publicBtn) publicBtn.className = isPublic ? activeBtnClasses : inactiveBtnClasses;
+
+  if (modeBadge) {
+    if (isPublic) {
+      modeBadge.innerText = "Public (Cloud)";
+      modeBadge.className = "text-[10px] px-2 py-0.5 rounded-full font-semibold bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300";
+    } else if (isLocal) {
+      modeBadge.innerText = "Local (Offline)";
+      modeBadge.className = "text-[10px] px-2 py-0.5 rounded-full font-semibold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300";
+    } else {
+      modeBadge.innerText = "Custom Server";
+      modeBadge.className = "text-[10px] px-2 py-0.5 rounded-full font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300";
+    }
+  }
+}
+
+function handleKrokiUrlChange() {
+  const inputEl = document.getElementById('krokiServerUrl');
+  if (!inputEl) return;
+  const val = inputEl.value.trim().replace(/\/+$/, '');
+  
+  if (val.includes('kroki.io') && krokiBaseUrl !== 'https://kroki.io') {
+    selectKrokiServerMode('public');
+    return;
+  }
+
+  saveKrokiConfig();
+  syncKrokiSettingsUI();
 }
 
 async function testKrokiConnection() {
@@ -38,7 +154,7 @@ async function testKrokiConnection() {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain; charset=utf-8' },
       body: samplePuml,
-      signal: (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) ? AbortSignal.timeout(2500) : undefined
+      signal: (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) ? AbortSignal.timeout(5000) : undefined
     });
     if (res.ok) {
       if (statusText) {
@@ -65,6 +181,7 @@ function saveKrokiConfig() {
   if (inputEl) {
     krokiBaseUrl = inputEl.value.trim().replace(/\/+$/, '') || 'http://localhost:8000';
     try { localStorage.setItem('kroki_url', krokiBaseUrl); } catch(e) {}
+    diagramSvgCache.clear();
     updateKrokiBadge();
     renderDocument();
   }

@@ -14,6 +14,24 @@ function getBackupTimestamp() {
 }
 
 var pendingCreateItemType = 'asciidoc'; // 'asciidoc' | 'markdown' | 'folder'
+var isTagsSectionExpanded = localStorage.getItem('sidebar_tags_expanded') !== 'false';
+var isRecentSectionExpanded = localStorage.getItem('sidebar_recent_expanded') !== 'false';
+
+function toggleTagsSection() {
+  isTagsSectionExpanded = !isTagsSectionExpanded;
+  try {
+    localStorage.setItem('sidebar_tags_expanded', isTagsSectionExpanded ? 'true' : 'false');
+  } catch(e) {}
+  renderWorkspaceDocList();
+}
+
+function toggleRecentSection() {
+  isRecentSectionExpanded = !isRecentSectionExpanded;
+  try {
+    localStorage.setItem('sidebar_recent_expanded', isRecentSectionExpanded ? 'true' : 'false');
+  } catch(e) {}
+  renderWorkspaceDocList();
+}
 
 async function openCreateItemModal(type = 'asciidoc') {
   pendingCreateItemType = type;
@@ -425,21 +443,24 @@ async function renderWorkspaceDocList() {
     if (tagsList.length > 0) {
       html += `
         <div class="mb-3">
-          <div class="flex items-center justify-between px-1.5 py-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider select-none mb-1">
+          <div onclick="toggleTagsSection()" class="flex items-center justify-between px-1.5 py-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider select-none mb-1 cursor-pointer hover:text-slate-600 dark:hover:text-slate-300 transition-colors group">
             <span class="flex items-center gap-1.5">
+              <i class="fa-solid ${isTagsSectionExpanded ? 'fa-chevron-down' : 'fa-chevron-right'} text-[8px] transition-transform text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300"></i>
               <i class="fa-solid fa-tags text-[10px]"></i>
               <span>Tags</span>
             </span>
             <span class="text-[9px] font-mono opacity-60">${tagsList.length}</span>
           </div>
-          <div class="flex flex-wrap gap-1 px-1">
-            ${tagsList.slice(0, 15).map(t => `
-              <button onclick="filterNotesByTag('${escapeHtml(t.name)}')" title="${t.count} note(s) tagged #${escapeHtml(t.name)}" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-slate-100 hover:bg-indigo-50 dark:bg-slate-800 dark:hover:bg-indigo-950/60 text-slate-700 hover:text-indigo-600 dark:text-indigo-300 dark:hover:text-indigo-200 border border-slate-200 dark:border-slate-700 transition cursor-pointer select-none">
-                <span>#${escapeHtml(t.name)}</span>
-                <span class="opacity-60 text-[9px] font-bold font-sans dark:text-slate-400">${t.count}</span>
-              </button>
-            `).join('')}
-          </div>
+          ${isTagsSectionExpanded ? `
+            <div class="flex flex-wrap gap-1 px-1 pt-0.5">
+              ${tagsList.slice(0, 15).map(t => `
+                <button onclick="filterNotesByTag('${escapeHtml(t.name)}')" title="${t.count} note(s) tagged #${escapeHtml(t.name)}" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-slate-100 hover:bg-indigo-50 dark:bg-slate-800 dark:hover:bg-indigo-950/60 text-slate-700 hover:text-indigo-600 dark:text-indigo-300 dark:hover:text-indigo-200 border border-slate-200 dark:border-slate-700 transition cursor-pointer select-none">
+                  <span>#${escapeHtml(t.name)}</span>
+                  <span class="opacity-60 text-[9px] font-bold font-sans dark:text-slate-400">${t.count}</span>
+                </button>
+              `).join('')}
+            </div>
+          ` : ''}
         </div>
         <div class="h-px bg-slate-100 dark:bg-slate-700/60 my-2"></div>
       `;
@@ -458,13 +479,19 @@ async function renderWorkspaceDocList() {
     if (recentDocs.length > 0) {
       html += `
         <div class="mb-3">
-          <div class="flex items-center gap-1.5 px-1.5 py-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider select-none mb-1">
-            <i class="fa-regular fa-clock"></i>
-            <span>Recently Opened</span>
+          <div onclick="toggleRecentSection()" class="flex items-center justify-between px-1.5 py-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider select-none mb-1 cursor-pointer hover:text-slate-600 dark:hover:text-slate-300 transition-colors group">
+            <span class="flex items-center gap-1.5">
+              <i class="fa-solid ${isRecentSectionExpanded ? 'fa-chevron-down' : 'fa-chevron-right'} text-[8px] transition-transform text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300"></i>
+              <i class="fa-regular fa-clock"></i>
+              <span>Recently Opened</span>
+            </span>
+            <span class="text-[9px] font-mono opacity-60">${recentDocs.length}</span>
           </div>
-          <div class="space-y-1">
-            ${recentDocs.map(doc => renderDocRow(doc)).join('')}
-          </div>
+          ${isRecentSectionExpanded ? `
+            <div class="space-y-1 pt-0.5">
+              ${recentDocs.map(doc => renderDocRow(doc)).join('')}
+            </div>
+          ` : ''}
         </div>
         <div class="h-px bg-slate-100 dark:bg-slate-700/60 my-2"></div>
       `;
