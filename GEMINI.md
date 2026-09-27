@@ -69,3 +69,38 @@ When a change qualifies as **substantive**, the agent **MUST ALWAYS** ask the us
 * **Git Operations:**
   * Only stage files modified for the specific task (`git add <file>`).
   * If executing in an environment that overrides `core.sshCommand`, ensure `git -c core.sshCommand=ssh` is used for remote operations (`git push`, `git fetch`).
+
+---
+
+## ⚡ CLI Permissions & Approval Modes (YOLO / Auto-Edit)
+
+Gemini CLI confirmation dialogues are enforced by the CLI runtime environment outside of the model. To streamline your workflow and avoid confirmation prompts for every file edit:
+
+### 1. Available Approval Modes in Gemini CLI
+* **`auto_edit` Mode (Recommended for this project):**
+  * Automatically approves and executes all file editing and creation tools (`write_file`, `replace`) without asking for confirmation.
+  * Continues to prompt you for confirmation before executing shell commands (including Git).
+  * **How to run:**
+    ```bash
+    gemini --approval-mode auto_edit
+    ```
+  * **Or set permanently in `.gemini/settings.json` or `~/.gemini/settings.json`:**
+    ```json
+    {
+      "general": {
+        "defaultApprovalMode": "auto_edit"
+      }
+    }
+    ```
+* **`yolo` Mode (Full Autonomous Execution):**
+  * Automatically approves all tool calls (file edits and shell commands).
+  * **How to run:**
+    ```bash
+    gemini --approval-mode yolo
+    ```
+
+### 2. Behavioral Mandate for the Agent
+* **Autonomous File Editing:** When running in `auto_edit` or `yolo` mode, the agent has full authority to create, update, and refactor any file inside the workspace directory directly without interrupting the user for approval on each file change.
+* **Strict Git Safeguard:** Even if the CLI is launched in full `yolo` mode, **the agent MUST NEVER execute Git commit or push commands (`git commit`, `git push`) without explicit, prior user confirmation and review**.
+* **Session Start Option:** At the beginning of a new session or major task, the agent should respect the user's choice to work autonomously on project files while systematically gating Git repository modifications behind user approval.
+
