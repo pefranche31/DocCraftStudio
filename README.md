@@ -31,6 +31,31 @@ DocCraft Studio was built and refined through **vibe coding**—a collaborative 
 * Real-time dual-pane live preview with synchronized split, editor-only, or preview-only modes.
 * Full support for AsciiDoc attributes, tables, callouts, and Markdown frontmatter.
 
+### 🖼️ Seamless Image Management & Direct Clipboard Paste (`Cmd+V`)
+* **Instant Clipboard Paste**: Copy any screenshot or image from your system clipboard and press **`Cmd+V` / `Ctrl+V`** directly in the editor.
+* **Smart Offline Storage**: Images are safely saved locally into IndexedDB (`attachments/`) without needing third-party cloud hosting.
+* **Format-Aware Insertion**: Automatically generates syntax formatted for your active language:
+  * *AsciiDoc*: `.MyImage \n image::attachments/MyImage.png[MyImage,width=100%]`
+  * *Markdown*: `*MyImage* \n ![MyImage](attachments/MyImage.png)`
+* **Attachment Gallery & Folders**: Visual image gallery modal to browse, upload, preview, or delete attachments, with fold/unfold toggles for inline image tags in the editor.
+* **Export with Attachments**: Download your note bundled alongside all referenced pictures in a clean archive.
+
+### 📊 Visual Spreadsheet Table Editor
+* **No More Manual Pipe Wrestling**: Design tables in a dedicated, interactive WYSIWYG spreadsheet grid modal instead of writing raw Markdown or AsciiDoc pipes by hand.
+* **Flexible Grid Controls**: Add or delete columns and rows, edit headers and cell contents effortlessly with intuitive grid navigation.
+* **CSV Import & Export**: Import existing `.csv` datasets directly into the visual editor, or export your table to CSV.
+* **Dual Format Generator**: Inserts beautifully structured AsciiDoc tables (`|=== ... |===`) or GitHub-Flavored Markdown tables (`| Col 1 | Col 2 |`) with proper alignments.
+
+### 📐 Integrated PlantUML & Kroki Diagram Studio
+* **Native Code-to-Diagrams**: Write `[plantuml]` blocks in AsciiDoc or ````plantuml` blocks in Markdown and watch them compile into sharp, responsive SVGs in real time.
+* **Visual Diagram Modal with Ready Templates**: Built-in visual studio featuring pre-configured templates for Sequence, Class, Component, Activity, and State diagrams.
+* **Interactive SVG Toolbar**: Every rendered diagram includes a floating interactive controls bar:
+  * 🔍 Pan and smooth zoom controls (+ / - / reset view)
+  * 📋 Copy SVG directly to clipboard in one click
+  * 💾 Download diagram as an independent SVG image file
+  * 👁️ Quick toggle between rendered diagram and underlying source code
+* **Local & Private**: Powered by a local Kroki container (`docker run -d -p 8000:8000 yuzutech/kroki`) with smart client-side SVG caching.
+
 ### 🌐 Bi-directional WikiLinks & Knowledge Graph
 * **Obsidian-style `[[WikiLinks]]`**: Instant auto-completion popup as soon as you type `[[`. Supports aliases (`[[Target Note|Custom Label]]`).
 * **Backlinks Drawer**: Discover incoming linked references and automatically convert unlinked mentions with a single click.
@@ -49,10 +74,6 @@ DocCraft Studio was built and refined through **vibe coding**—a collaborative 
 ### 🧘 Zen Mode (Distraction-Free Writing)
 * Fullscreen writing sanctuary (`F11` or `Cmd+Shift+F`) hiding all chrome, menus, and sidebars.
 * Built-in **typewriter scrolling** keeping your active cursor line centered on screen.
-
-### 📊 Diagrams & Visual Table Editor
-* **PlantUML / Kroki**: Live diagram generation from fenced blocks using a local Kroki engine (`http://localhost:8000`).
-* **Visual Spreadsheet Table Editor**: Create and format tabular data visually and insert markdown/AsciiDoc tables in one click.
 
 ### 🎨 Carefully Crafted Themes
 * **Dark Variants**: *Midnight Slate* (default deep blue-slate), *Pure Black (OLED)* (high contrast zero-battery-drain `#000000`), and *Obsidian Charcoal*.
