@@ -4,6 +4,7 @@
 
 **A vibe-coded, 100% offline, local-first personal knowledge management (PKM) and documentation studio for AsciiDoc and Markdown.**
 
+[![Release](https://img.shields.io/badge/version-v1.0.0-emerald.svg)](#)
 [![Status](https://img.shields.io/badge/status-active-success.svg)](#)
 [![Vibe Coded](https://img.shields.io/badge/vibe--coded-100%25-ff69b4.svg)](#-vibe-coding-philosophy)
 [![Offline First](https://img.shields.io/badge/architecture-local--first-blue.svg)](#-key-features)

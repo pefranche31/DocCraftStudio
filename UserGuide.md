@@ -1,5 +1,5 @@
 <a id="english-version"></a>
-# 📖 DocCraft Studio — User Guide
+# 📖 DocCraft Studio — User Guide (v1.0)
 
 > **Language / Langue :** [English (US)](#english-version) | [Français](#version-française)
 

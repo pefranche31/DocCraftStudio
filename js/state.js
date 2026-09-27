@@ -2,6 +2,8 @@
  * DocCraft Studio - Global Application State
  */
 
+var APP_VERSION = '1.0.0';
+
 // State variables
 var currentMode = 'asciidoc'; // 'asciidoc' | 'markdown'
 var asciidoctorEngine = null;
