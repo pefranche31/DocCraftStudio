@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocCraft Studio</title>
+  
+  <!-- Browser SVG Favicon containing a pencil emoji (✏️) -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✏️</text></svg>">
+  
+  <!-- Local Vendor Styles & Scripts for 100% Offline Capability -->
+  <link rel="stylesheet" href="vendor/fonts/fonts.css">
+  <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
+  <link rel="stylesheet" href="vendor/codemirror/codemirror.min.css">
+  <link rel="stylesheet" href="vendor/codemirror/addon/fold/foldgutter.min.css">
+
+  <script src="vendor/tailwind/tailwind.js"></script>
+  <script src="vendor/codemirror/codemirror.min.js"></script>
+  <script src="vendor/codemirror/mode/asciidoc/asciidoc.js"></script>
+  <script src="vendor/codemirror/mode/markdown/markdown.min.js"></script>
+  <script src="vendor/codemirror/addon/fold/foldcode.min.js"></script>
+  <script src="vendor/codemirror/addon/fold/foldgutter.min.js"></script>
+  <script src="vendor/codemirror/addon/search/searchcursor.min.js"></script>
+  <script src="vendor/marked/marked.min.js"></script>
+  <script src="vendor/asciidoctor/asciidoctor.min.js"></script>
+  <script src="vendor/dompurify/purify.min.js"></script>
+  <script src="vendor/jszip/jszip.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['"Fira Code"', 'monospace']
+          },
+          colors: {
+            brand: {
+              50: '#f0fdfa',
+              500: '#0d9488',
+              600: '#0f766e',
+              700: '#115e59',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body class="h-full bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 flex flex-col antialiased font-sans transition-colors duration-200">
+
+  <!-- Top App Navigation Bar -->
+  <header class="h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 flex items-center justify-between shrink-0 shadow-sm z-10">
+    <div class="flex items-center space-x-3">
+      <!-- Toggle Workspace Sidebar (Show/Hide left panel) -->
+      <button id="btnToggleDesktopSidebar" onclick="toggleDesktopSidebar()" title="Toggle Sidebar Panel" class="w-9 h-9 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition shrink-0 shadow-sm cursor-pointer">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center text-white shadow-md">
+        <i class="fa-solid fa-pen-nib text-lg"></i>
+      </div>
+      <div>
+        <h1 class="font-bold text-lg leading-tight flex items-center gap-2">
+          DocCraft Studio
+          <span id="modeBadge" class="text-xs px-2 py-0.5 rounded-full bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-300 font-semibold uppercase tracking-wider">
+            AsciiDoc
+          </span>
+        </h1>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Serverless visual editor & instant rendering</p>
+      </div>
+    </div>
+
+    <div class="flex items-center space-x-2 sm:space-x-3">
+      <!-- Quick Switcher (Cmd+K) Button -->
+      <button onclick="openQuickSwitcher()" title="Quick Switcher & Command Palette (Cmd+K)" class="px-2.5 sm:px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shadow-sm cursor-pointer select-none">
+        <i class="fa-solid fa-magnifying-glass text-indigo-500"></i>
+        <span class="hidden sm:inline">Search...</span>
+        <kbd class="hidden md:inline-block px-1.5 py-0.2 text-[10px] font-mono bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-700/60 rounded shadow-xs text-indigo-600 dark:text-indigo-400">⌘K</kbd>
+      </button>
+
+      <!-- Daily Note (Alt+D) Button -->
+      <button onclick="openDailyNote()" title="Open Today's Daily Note (Alt+D)" class="px-2.5 sm:px-3 py-1.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shadow-sm cursor-pointer select-none">
+        <i class="fa-regular fa-calendar-check text-amber-500"></i>
+        <span class="hidden md:inline">Daily</span>
+      </button>
+
+      <!-- Global Tasks Hub Button -->
+      <button onclick="openTasksHubModal()" title="Global Tasks Hub" class="px-2.5 sm:px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shadow-sm cursor-pointer select-none">
+        <i class="fa-solid fa-list-check text-indigo-500"></i>
+        <span class="hidden md:inline">Tasks</span>
+        <span id="tasksPendingCountBadge" class="hidden px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-200">0</span>
+      </button>
+
+      <!-- Knowledge Graph View Button (Cmd+G) -->
+      <button onclick="openKnowledgeGraphModal()" title="Interactive Knowledge Graph (Cmd+G)" class="px-2.5 sm:px-3 py-1.5 bg-violet-50 hover:bg-violet-100 dark:bg-violet-950/60 dark:hover:bg-violet-900/60 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shadow-sm cursor-pointer select-none">
+        <i class="fa-solid fa-circle-nodes text-violet-500"></i>
+        <span class="hidden md:inline">Graph</span>
+      </button>
+
+      <!-- Zen Focus Writing Mode Button (F11 / Cmd+Shift+F) -->
+      <button onclick="toggleZenMode()" title="Zen Focus Writing Mode (F11 / Cmd+Shift+F)" class="px-2.5 sm:px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shadow-sm cursor-pointer select-none">
+        <i class="fa-solid fa-feather text-emerald-500"></i>
+        <span class="hidden md:inline">Zen</span>
+      </button>
+
+      <!-- Kroki Server Settings Button -->
+      <button onclick="openSettingsModal()" title="Kroki PlantUML container settings" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-medium flex items-center gap-1.5 transition">
+        <span id="krokiStatusDot" class="w-2 h-2 rounded-full bg-emerald-500 inline-block shadow-sm"></span>
+        <span id="krokiBadgeLabel" class="hidden md:inline">Kroki: 8000</span>
+        <i class="fa-solid fa-gear text-[10px] text-slate-400"></i>
+      </button>
+
+      <!-- Undo Button -->
+      <button onclick="editorUndo()" title="Undo last action (Ctrl+Z)" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-medium flex items-center gap-1.5 transition">
+        <i class="fa-solid fa-arrow-rotate-left text-slate-400 dark:text-slate-500"></i>
+        <span class="hidden md:inline">Undo</span>
+      </button>
+
+      <!-- Redo Button -->
+      <button onclick="editorRedo()" title="Redo last action (Ctrl+Y)" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-medium flex items-center gap-1.5 transition">
+        <i class="fa-solid fa-arrow-rotate-right text-slate-400 dark:text-slate-500"></i>
+        <span class="hidden md:inline">Redo</span>
+      </button>
+
+      <!-- Reset Split 50/50 Button -->
+      <button onclick="resetMainPanelsSplit()" title="Reset Editor / Preview layout to 50%" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-medium flex items-center gap-1.5 transition">
+        <i class="fa-solid fa-arrows-left-right text-slate-400 dark:text-slate-500"></i>
+        <span class="hidden md:inline">50/50 Split</span>
+      </button>
+
+      <!-- 3-Way View Layout Segmented Toggle (Split / Code / Preview) -->
+      <div id="viewLayoutToggle" class="flex items-center p-0.5 bg-slate-200/80 dark:bg-slate-700/80 rounded-lg select-none shrink-0 shadow-inner">
+        <button id="btnViewLayoutBoth" onclick="setViewLayout('both')" title="Split View: Code + Preview (Cmd+Alt+1)" class="px-2 py-1 rounded-md text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs">
+          <i class="fa-solid fa-table-columns text-xs"></i>
+          <span class="hidden xl:inline">Split</span>
+        </button>
+        <button id="btnViewLayoutCode" onclick="setViewLayout('code')" title="Code Only View (Cmd+Alt+2)" class="px-2 py-1 rounded-md text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">
+          <i class="fa-solid fa-code text-xs"></i>
+          <span class="hidden xl:inline">Code</span>
+        </button>
+        <button id="btnViewLayoutPreview" onclick="setViewLayout('preview')" title="Preview Only View (Cmd+Alt+3)" class="px-2 py-1 rounded-md text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">
+          <i class="fa-regular fa-eye text-xs"></i>
+          <span class="hidden xl:inline">Preview</span>
+        </button>
+      </div>
+
+      <!-- Copy Button -->
+      <button onclick="copySourceToClipboard()" title="Copy source code" class="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-medium flex items-center gap-1.5 transition shadow">
+        <i class="fa-regular fa-copy"></i>
+        <span class="hidden sm:inline">Copy</span>
+      </button>
+
+      <!-- Zoom Dropdown Select List -->
+      <div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-1.5 rounded-lg select-none shrink-0 font-bold">
+        <i class="fa-solid fa-magnifying-glass text-[10px] text-slate-400"></i>
+        <select id="zoomDropdown" onchange="adjustZoom(this.value)" class="bg-transparent border-none outline-none text-[10px] font-bold text-slate-600 dark:text-slate-300 cursor-pointer pr-1">
+          <option value="50" class="bg-white dark:bg-slate-800">50%</option>
+          <option value="60" class="bg-white dark:bg-slate-800">60%</option>
+          <option value="70" class="bg-white dark:bg-slate-800">70%</option>
+          <option value="80" class="bg-white dark:bg-slate-800">80%</option>
+          <option value="90" class="bg-white dark:bg-slate-800">90%</option>
+          <option value="100" selected class="bg-white dark:bg-slate-800">100%</option>
+          <option value="110" class="bg-white dark:bg-slate-800">110%</option>
+          <option value="120" class="bg-white dark:bg-slate-800">120%</option>
+          <option value="130" class="bg-white dark:bg-slate-800">130%</option>
+          <option value="140" class="bg-white dark:bg-slate-800">140%</option>
+          <option value="150" class="bg-white dark:bg-slate-800">150%</option>
+        </select>
+      </div>
+
+      <!-- Dark Mode Toggle -->
+      <button onclick="toggleDarkMode()" class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-600 dark:text-amber-400 transition shrink-0">
+        <i id="themeIcon" class="fa-solid fa-moon"></i>
+      </button>
+
+      <!-- Global Settings Button -->
+      <button onclick="openSettingsModal()" title="Open Settings" class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition shrink-0">
+        <i class="fa-solid fa-gear"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Split Main Workspace -->
+  <main class="flex-1 flex flex-row overflow-hidden relative">
+    
+    <!-- PERMANENT LEFT PANEL: Workspace File Tree -->
+    <div id="workspaceSidebar" style="width: 280px" class="h-full bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col shrink-0 select-none">
+      <!-- Sidebar Header / Actions -->
+      <div class="p-3.5 border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/30 flex flex-col gap-2 shrink-0">
+        <!-- New Item Action Buttons -->
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mb-2 tracking-wider">New Item</label>
+          <div class="grid grid-cols-4 gap-1">
+            <button onclick="openCreateItemModal('asciidoc')" title="New AsciiDoc Document (.adoc)" class="py-2 px-1 bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/40 dark:hover:bg-teal-900/60 border border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 rounded-lg text-[10px] font-bold flex flex-col items-center justify-center gap-1 transition shadow-2xs cursor-pointer">
+              <i class="fa-solid fa-file-lines text-xs text-teal-600 dark:text-teal-400"></i>
+              <span>+ .adoc</span>
+            </button>
+            <button onclick="openCreateItemModal('markdown')" title="New Markdown Document (.md)" class="py-2 px-1 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 rounded-lg text-[10px] font-bold flex flex-col items-center justify-center gap-1 transition shadow-2xs cursor-pointer">
+              <i class="fa-brands fa-markdown text-xs text-blue-600 dark:text-blue-400"></i>
+              <span>+ .md</span>
+            </button>
+            <button onclick="openCreateItemModal('folder')" title="New Folder" class="py-2 px-1 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 rounded-lg text-[10px] font-bold flex flex-col items-center justify-center gap-1 transition shadow-2xs cursor-pointer">
+              <i class="fa-solid fa-folder-plus text-xs text-amber-500"></i>
+              <span>+ Folder</span>
+            </button>
+            <button onclick="document.getElementById('importDocFileInput').click()" title="Import .adoc / .md / .txt files from your computer (or Drag & Drop)" class="py-2 px-1 bg-violet-50 hover:bg-violet-100 dark:bg-violet-950/40 dark:hover:bg-violet-900/60 border border-violet-200 dark:border-violet-800 text-violet-700 dark:text-violet-300 rounded-lg text-[10px] font-bold flex flex-col items-center justify-center gap-1 transition shadow-2xs cursor-pointer">
+              <i class="fa-solid fa-file-import text-xs text-violet-600 dark:text-violet-400"></i>
+              <span>Import</span>
+            </button>
+          </div>
+          <input type="file" id="importDocFileInput" accept=".adoc,.asciidoc,.md,.markdown,.txt" multiple class="hidden" onchange="importDocumentsFromFiles(event)">
+        </div>
+      </div>
+
+      <!-- Scrollable File Tree Container -->
+      <div id="workspaceDocList" class="flex-1 overflow-y-auto p-3 space-y-1.5">
+        <!-- Dynamically rendered file tree -->
+      </div>
+
+      <!-- Sidebar Footer with Backup & Restore actions -->
+      <div class="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/30 flex flex-col gap-2 shrink-0">
+        <!-- Document Actions Grid -->
+        <div class="grid grid-cols-2 gap-2 mb-1">
+          <!-- Convert & Copy Button -->
+          <button onclick="createConvertedCopy()" title="Create a converted copy of this file" class="py-2 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-sm cursor-pointer">
+            <i class="fa-solid fa-copy"></i>
+            <span>Convert & Copy</span>
+          </button>
+
+          <!-- Export Button -->
+          <button onclick="exportActiveDocumentAndPictures()" title="Export document and attached images" class="py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition border border-slate-300 dark:border-slate-600 cursor-pointer">
+            <i class="fa-solid fa-arrow-down-to-line"></i>
+            <span>Export Doc</span>
+          </button>
+        </div>
+
+        <!-- HTML Export & Backup Grid -->
+        <div class="grid grid-cols-2 gap-2 mb-1">
+          <!-- Export Preview HTML -->
+          <button onclick="exportRenderedHTML()" title="Export fully compiled preview as a standalone HTML file" class="py-2 bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/30 dark:hover:bg-teal-900/50 border border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-sm">
+            <i class="fa-solid fa-file-code"></i>
+            <span>Export HTML</span>
+          </button>
+
+          <!-- Backup App HTML -->
+          <button onclick="exportApplicationBackup()" title="Download the full editor application (index.html) source code backup" class="py-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-sm">
+            <i class="fa-solid fa-laptop-code"></i>
+            <span>Backup App</span>
+          </button>
+        </div>
+
+        <button onclick="exportWorkspaceJSON()" title="Export entire workspace as a single JSON backup file" class="w-full py-2 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition border border-indigo-200 dark:border-indigo-800 cursor-pointer">
+          <i class="fa-solid fa-cloud-arrow-down text-indigo-500"></i>
+          <span>Backup Workspace</span>
+        </button>
+        
+        <input type="file" id="importWorkspaceFileInput" accept=".zip,.json" class="hidden" onchange="importWorkspaceArchive(event)">
+        <label for="importWorkspaceFileInput" title="Restore workspace from a .zip or .json backup archive" class="w-full py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition border border-slate-300 dark:border-slate-600 select-none">
+          <i class="fa-solid fa-cloud-arrow-up text-slate-400"></i>
+          <span>Restore (.zip / .json)</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Floating Exit Zen Mode Button -->
+    <button id="zenModeExitBtn" onclick="toggleZenMode(false)" class="hidden fixed top-4 right-4 z-50 px-3.5 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-900 text-white text-xs font-bold shadow-2xl border border-slate-700/80 backdrop-blur-md transition flex items-center gap-1.5 cursor-pointer">
+      <i class="fa-solid fa-compress text-indigo-400"></i>
+      <span>Exit Zen (Esc)</span>
+    </button>
+
+    <!-- Sidebar Resize Handle (thin vertical splitter) -->
+    <div id="sidebarResizeHandle" class="w-1.5 hover:w-2 h-full bg-slate-100 hover:bg-indigo-300 dark:bg-slate-900 dark:hover:bg-indigo-950 cursor-col-resize shrink-0 transition-all z-20 border-r border-slate-200 dark:border-slate-700"></div>
+
+    <!-- CODE EDITOR & PREVIEW PANELS -->
+    <div id="mainPanelsContainer" class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+      <!-- LEFT PANE: Editor (Sized proportionally by dragging, defaults to 50%) -->
+      <div id="mainEditorCol" style="width: 50%;" class="h-1/2 md:h-full flex flex-col border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden shrink-0">
+
+        <!-- Contextual Formatting Toolbar (Now aligned above code editor pane starting exactly from separation line!) -->
+        <div class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-2 flex flex-wrap items-center gap-1.5 overflow-x-auto text-slate-700 dark:text-slate-200 shrink-0 select-none">
+          <!-- Headings dropdown / buttons -->
+          <div class="flex items-center bg-slate-100 dark:bg-slate-700/50 rounded-lg p-0.5 border border-slate-200 dark:border-slate-600">
+            <button onclick="insertHeader(1)" title="Heading level 1 (H1)" class="w-7 h-7 flex items-center justify-center rounded hover:bg-white dark:hover:bg-slate-600 text-xs font-bold transition">H1</button>
+            <button onclick="insertHeader(2)" title="Heading level 2 (H2)" class="w-7 h-7 flex items-center justify-center rounded hover:bg-white dark:hover:bg-slate-600 text-xs font-bold transition">H2</button>
+            <button onclick="insertHeader(3)" title="Heading level 3 (H3)" class="w-7 h-7 flex items-center justify-center rounded hover:bg-white dark:hover:bg-slate-600 text-xs font-bold transition">H3</button>
+          </div>
+
+          <div class="h-5 w-px bg-slate-300 dark:bg-slate-600 mx-1"></div>
+
+          <!-- Inline text styling -->
+          <div class="flex items-center space-x-1">
+            <button onclick="wrapText('bold')" title="Bold" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-sm transition">
+              <i class="fa-solid fa-bold"></i>
+            </button>
+            <button onclick="wrapText('italic')" title="Italic" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-sm transition">
+              <i class="fa-solid fa-italic"></i>
+            </button>
+            <button onclick="wrapText('code')" title="Inline code" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-sm transition">
+              <i class="fa-solid fa-code"></i>
+            </button>
+            <button onclick="wrapText('strike')" title="Strikethrough" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-sm transition">
+              <i class="fa-solid fa-strikethrough"></i>
+            </button>
+            <button onclick="toggleComment()" title="Comment / Uncomment lines (Ctrl+/)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-sm transition text-indigo-600 dark:text-indigo-400">
+              <i class="fa-solid fa-comment-slash"></i>
+            </button>
+          </div>
+
+          <div class="h-5 w-px bg-slate-300 dark:bg-slate-600 mx-1"></div>
+
+          <!-- Lists & Quotes -->
+          <div class="flex items-center space-x-1">
+            <button onclick="insertList('ul')" title="Bulleted list" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-sm transition">
+              <i class="fa-solid fa-list-ul"></i>
+            </button>
+            <button onclick="insertList('ol')" title="Numbered list" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-sm transition">
+              <i class="fa-solid fa-list-ol"></i>
+            </button>
+            <button onclick="insertList('check')" title="Checkbox (Checklist)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-sm transition">
+              <i class="fa-solid fa-square-check"></i>
+            </button>
+            <button onclick="insertQuote()" title="Quote / Block" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-sm transition">
+              <i class="fa-solid fa-quote-left"></i>
+            </button>
+          </div>
+
+          <div class="h-5 w-px bg-slate-300 dark:bg-slate-600 mx-1"></div>
+
+          <!-- Rich Elements: Links, Images, Tables, Code Blocks, Admonitions -->
+          <div class="flex items-center space-x-1">
+            <button onclick="openLinkModal()" title="Insert hyperlink" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-sm transition">
+              <i class="fa-solid fa-link"></i>
+            </button>
+            <button onclick="openImageModal()" title="Insert image with caption and size" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-sm transition text-emerald-600 dark:text-emerald-400">
+              <i class="fa-regular fa-image"></i>
+            </button>
+            <button onclick="openTableModal()" title="Interactive Table generator" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-sm transition text-blue-600 dark:text-blue-400">
+              <i class="fa-solid fa-table"></i>
+            </button>
+            <button onclick="insertCodeBlock()" title="Code block" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-sm transition">
+              <i class="fa-solid fa-terminal"></i>
+            </button>
+            <button onclick="insertPlantUML()" title="Insert PlantUML diagram" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-sm transition text-indigo-600 dark:text-indigo-400">
+              <i class="fa-solid fa-diagram-project"></i>
+            </button>
+            <button onclick="openAdmonitionModal()" id="btnAdmonition" title="Admonition block (Note, Tip, Warning)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-sm transition text-amber-600 dark:text-amber-400">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+            </button>
+            <button onclick="insertHorizontalRule()" title="Horizontal rule" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-sm transition">
+              <i class="fa-solid fa-minus"></i>
+            </button>
+            <button id="btnForcedLineBreak" onclick="insertForcedLineBreak()" title="Forced line break ({empty} +)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-sm transition">
+              <i class="fa-solid fa-turn-down"></i>
+            </button>
+            <div class="h-5 w-px bg-slate-300 dark:bg-slate-600 mx-1"></div>
+            <!-- Insert Template Button -->
+            <button onclick="openInsertTemplateModal()" title="Insert Note Template (Meeting, Project, Book, Review)" class="h-8 px-2.5 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-xs font-bold transition flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 cursor-pointer">
+              <i class="fa-solid fa-stamp text-xs"></i>
+              <span class="hidden xl:inline">Template</span>
+            </button>
+          </div>
+
+          <!-- Active Syntax Helper indicator -->
+          <div class="ml-auto text-xs text-slate-600 dark:text-slate-400 hidden lg:flex items-center gap-2">
+            <span class="inline-block w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span>
+            <span id="syntaxStatusLabel">Active syntax: AsciiDoc</span>
+          </div>
+        </div>
+
+        <!-- Editor Header / Status -->
+        <div class="px-4 py-2 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs font-mono text-slate-500 dark:text-slate-400 select-none">
+        <div class="flex items-center gap-3">
+          <span class="flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
+            <i class="fa-regular fa-pen-to-square text-teal-600"></i>
+            <span id="editorLabel">Editor (AsciiDoc)</span>
+          </span>
+
+          <!-- Cloud Persistence Status Badge -->
+          <span id="saveStatusBadge" class="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-sans border border-slate-200 dark:border-slate-700">
+            <i id="saveStatusIcon" class="fa-solid fa-cloud text-slate-400"></i>
+            <span id="saveStatusText">Initializing...</span>
+          </span>
+
+          <!-- Go-To Preview Button -->
+          <button id="btnSyncToPreview" onclick="syncEditorSelectionToPreview()" title="Go-To selected text in preview" class="px-2.5 py-1 rounded-lg bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/40 dark:hover:bg-teal-900/60 border border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 font-sans text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm">
+            <i class="fa-solid fa-arrow-right"></i>
+            <span>Go-To Preview</span>
+          </button>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <!-- Word Wrap Option Toggle -->
+          <label class="flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition select-none mr-2">
+            <input id="toggleWordWrap" type="checkbox" checked onchange="toggleCodeMirrorWordWrap(this.checked)" class="rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+            <i class="fa-solid fa-paragraph text-[10px]"></i>
+            <span>Word Wrap</span>
+          </label>
+
+          <!-- Sync Scroll Option Toggle (Unchecked by default!) -->
+          <label class="flex items-center gap-1 cursor-pointer text-xs font-semibold text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition select-none mr-2">
+            <input id="toggleSyncScroll" type="checkbox" class="rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+            <i class="fa-solid fa-arrows-up-down text-[10px]"></i>
+            <span>Sync Scroll</span>
+          </label>
+
+          <span id="wordCount">0 words</span>
+          <span id="charCount">0 chars.</span>
+          <button onclick="showSearchReplace()" title="Find & Replace (Ctrl+F)" class="hover:text-indigo-500 transition mr-1 cursor-pointer">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </button>
+          <button onclick="clearEditor()" title="Clear all" class="hover:text-red-500 transition cursor-pointer">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Textarea Input (Wrapped by CodeMirror) -->
+      <div class="relative flex-1 p-0 overflow-hidden">
+        <!-- Floating Search & Replace Bar -->
+        <div id="editorSearchReplaceBar" class="hidden absolute top-4 right-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-30 p-3 w-80 space-y-2 flex flex-col text-xs transition-all duration-200 select-none">
+          <!-- Close & Header -->
+          <div class="flex justify-between items-center text-slate-400">
+            <span class="font-bold flex items-center gap-1 text-slate-600 dark:text-slate-300">
+              <i class="fa-solid fa-magnifying-glass text-[10px]"></i>
+              <span>Search & Replace</span>
+            </span>
+            <button onclick="hideSearchReplace()" class="hover:text-slate-600 dark:hover:text-slate-200 text-sm cursor-pointer">&times;</button>
+          </div>
+
+          <!-- Search Input -->
+          <div class="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 rounded-lg p-1 border border-slate-200 dark:border-slate-700">
+            <input id="searchQuery" type="text" placeholder="Find..." oninput="onSearchQueryChange()" class="flex-1 bg-transparent px-1.5 py-0.5 outline-none font-mono text-slate-800 dark:text-slate-100 text-xs">
+            <span id="searchResultCount" class="text-[9px] font-bold text-slate-400 mr-1 select-none">0/0</span>
+            <button onclick="searchPrev()" title="Previous match" class="w-5 h-5 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 cursor-pointer"><i class="fa-solid fa-chevron-up text-[10px]"></i></button>
+            <button onclick="searchNext()" title="Next match" class="w-5 h-5 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 cursor-pointer"><i class="fa-solid fa-chevron-down text-[10px]"></i></button>
+          </div>
+
+          <!-- Replace Input -->
+          <div class="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 rounded-lg p-1 border border-slate-200 dark:border-slate-700">
+            <input id="replaceQuery" type="text" placeholder="Replace with..." class="flex-1 bg-transparent px-1.5 py-0.5 outline-none font-mono text-slate-800 dark:text-slate-100 text-xs">
+            <button onclick="replaceCurrent()" title="Replace current match" class="px-2 py-0.5 rounded bg-blue-500 hover:bg-blue-600 text-white font-bold text-[10px] cursor-pointer">Replace</button>
+            <button onclick="replaceAll()" title="Replace all matches" class="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 font-bold text-[10px] cursor-pointer text-slate-700 dark:text-slate-200">All</button>
+          </div>
+        </div>
+
+        <textarea id="rawEditor" spellcheck="false"
+          placeholder="Write your document here or use the buttons above..."
+          class="w-full h-full resize-none outline-none font-mono text-sm leading-relaxed bg-transparent text-slate-900 dark:text-slate-100 placeholder-slate-400 p-3"></textarea>
+      </div>
+    </div>
+
+    <!-- Main Panels Drag Splitter Handle (thin vertical splitter) -->
+    <div id="mainPanelsSplitterHandle" class="hidden md:block w-1.5 hover:w-2 h-full bg-slate-100 hover:bg-indigo-300 dark:bg-slate-900 dark:hover:bg-indigo-950 cursor-col-resize shrink-0 transition-all z-20 border-r border-slate-200 dark:border-slate-700"></div>
+
+    <!-- RIGHT PANE: Live Visualization -->
+    <div id="mainPreviewCol" class="flex-grow flex-1 flex flex-col bg-slate-50 dark:bg-slate-900/50 overflow-hidden">
+      
+      <!-- Preview Header -->
+      <div id="previewHeader" class="px-4 py-2 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400 select-none">
+        <div class="flex items-center gap-3">
+          <span class="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+            <i class="fa-regular fa-eye text-emerald-600"></i>
+            <span>Live Preview</span>
+          </span>
+
+          <!-- Go-To Code Button -->
+          <button id="btnSyncToEditor" onclick="syncPreviewSelectionToEditor()" title="Go-To selected text in Code Editor" class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 font-sans text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm">
+            <i class="fa-solid fa-arrow-left"></i>
+            <span>Go-To Code</span>
+          </button>
+
+          <!-- Backlinks Button -->
+          <button id="btnToggleBacklinks" onclick="toggleBacklinksDrawer()" title="View linked references and mentions for active note" class="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 font-sans text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm">
+            <i class="fa-solid fa-arrows-split-up-and-left text-indigo-500"></i>
+            <span>Backlinks</span>
+            <span id="backlinksCountBadge" class="hidden px-1.5 py-0.2 rounded-full text-[9px] bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-200 font-mono font-bold">0</span>
+          </button>
+        </div>
+        <div class="flex items-center gap-2">
+          <!-- Sync Mode Toggle Button -->
+          <button id="btnSyncMode" onclick="togglePreviewSyncMode()" title="Toggle Preview Sync (Live / 10s / Paused)" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded text-[10px] font-bold transition flex items-center gap-1 shrink-0 select-none shadow-sm cursor-pointer text-slate-700 dark:text-slate-200">
+            <i class="fa-solid fa-bolt text-amber-500 animate-pulse mr-1"></i>
+            <span class="hidden sm:inline">Live Sync</span>
+          </button>
+          <span id="renderTimeBadge" class="text-[10px] bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-600 dark:text-slate-300">0ms</span>
+          <button onclick="printDocument()" title="Print or save as PDF" class="hover:text-teal-600 transition flex items-center gap-1 text-xs cursor-pointer">
+            <i class="fa-solid fa-print"></i>
+            <span class="hidden sm:inline">Print</span>
+          </button>
+          <!-- Search in Preview Button (no keyboard shortcut) -->
+          <button onclick="togglePreviewSearch()" title="Search in Preview" class="hover:text-teal-600 transition flex items-center gap-1 text-xs cursor-pointer">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span class="hidden sm:inline">Find</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Preview Search Bar (Slides down just below preview header) -->
+      <div id="previewSearchBar" class="hidden px-4 py-1.5 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3 text-xs shrink-0 select-none">
+        <div class="flex items-center gap-1.5 bg-white dark:bg-slate-900 rounded-lg p-0.5 px-2 border border-slate-200 dark:border-slate-700 flex-1 max-w-sm shadow-inner">
+          <i class="fa-solid fa-magnifying-glass text-slate-400 text-[10px]"></i>
+          <input id="previewSearchQuery" type="text" placeholder="Search preview..." oninput="onPreviewSearchQueryChange()" class="flex-1 bg-transparent py-0.5 outline-none font-sans text-slate-800 dark:text-slate-100 text-xs">
+          <span id="previewSearchResultCount" class="text-[9px] font-bold text-slate-400 mr-1.5 select-none">0/0</span>
+          <button onclick="previewSearchPrev()" title="Previous match" class="w-5 h-5 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 cursor-pointer flex items-center justify-center"><i class="fa-solid fa-chevron-up text-[9px]"></i></button>
+          <button onclick="previewSearchNext()" title="Next match" class="w-5 h-5 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 cursor-pointer flex items-center justify-center"><i class="fa-solid fa-chevron-down text-[9px]"></i></button>
+        </div>
+        <button onclick="togglePreviewSearch()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-base font-bold cursor-pointer">&times;</button>
+      </div>
+
+      <!-- Preview Render Target -->
+      <div id="previewContainer" class="flex-1 overflow-y-auto p-6 md:p-8 bg-white dark:bg-slate-900 transition-colors">
+        <!-- Frontmatter / Document Metadata Inspector Card -->
+        <div id="documentMetadataCard" class="hidden"></div>
+        <div id="renderOutput" class="preview-body w-full max-w-none"></div>
+      </div>
+
+      <!-- Backlinks & Mentions Collapsible Drawer -->
+      <div id="backlinksDrawer" class="hidden border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 backdrop-blur-sm max-h-72 overflow-y-auto shrink-0 shadow-lg transition-all duration-200">
+        <div class="p-2.5 px-4 border-b border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between bg-white/70 dark:bg-slate-900/60 sticky top-0 z-10">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-arrows-split-up-and-left text-indigo-500 text-xs"></i>
+            <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Backlinks & Mentions</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button onclick="toggleBacklinksTab('linked')" id="tabBacklinksLinked" class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-indigo-600 text-white shadow-xs cursor-pointer">Linked References (0)</button>
+            <button onclick="toggleBacklinksTab('unlinked')" id="tabBacklinksUnlinked" class="px-2.5 py-1 rounded-md text-[11px] font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer">Unlinked Mentions (0)</button>
+            <button onclick="toggleBacklinksDrawer()" title="Close Backlinks panel" class="w-6 h-6 rounded flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm ml-1 cursor-pointer">&times;</button>
+          </div>
+        </div>
+        <div id="backlinksList" class="p-3 space-y-2">
+          <!-- Populated dynamically by renderBacklinksList() -->
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- MODAL: Insert Note Template -->
+  <div id="insertTemplateModal" onclick="if(event.target === this) closeInsertTemplateModal()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 transition-all">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div class="p-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50/80 dark:bg-slate-900/60">
+        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+          <i class="fa-solid fa-stamp text-indigo-500"></i>
+          <span>Note Templates</span>
+        </h3>
+        <div class="flex items-center gap-2">
+          <button onclick="openEditTemplateModal(null)" title="Create custom template" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer">
+            <i class="fa-solid fa-plus text-[10px]"></i>
+            <span>New</span>
+          </button>
+          <button onclick="closeInsertTemplateModal()" title="Close (Esc)" class="w-7 h-7 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center transition cursor-pointer">
+            <i class="fa-solid fa-xmark text-sm"></i>
+          </button>
+        </div>
+      </div>
+      <div class="p-4 overflow-y-auto max-h-[60vh] space-y-2.5" id="templateChoicesList">
+        <!-- Rendered dynamically by openInsertTemplateModal() -->
+      </div>
+      <div class="p-3 bg-slate-50 dark:bg-slate-900/80 border-t border-slate-100 dark:border-slate-700 flex items-center justify-end">
+        <button onclick="closeInsertTemplateModal()" class="px-3.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 transition cursor-pointer">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Create / Edit Note Template -->
+  <div id="editTemplateModal" onclick="if(event.target === this) closeEditTemplateModal()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-55 hidden flex items-center justify-center p-4 transition-all">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden max-h-[90vh]">
+      <!-- Header -->
+      <div class="p-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50/80 dark:bg-slate-900/60">
+        <h3 id="editTemplateModalTitle" class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+          <i class="fa-solid fa-stamp text-indigo-500"></i>
+          <span>Create Note Template</span>
+        </h3>
+        <button onclick="closeEditTemplateModal()" title="Close (Esc)" class="w-7 h-7 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center transition cursor-pointer">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="p-5 space-y-3.5 overflow-y-auto">
+        <div>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Template Name</label>
+          <input id="editTemplateName" type="text" placeholder="e.g. Bug Report, Sprint Retro..." class="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-xs font-medium text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Description</label>
+          <input id="editTemplateDesc" type="text" placeholder="Brief explanation of when to use this template..." class="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-xs text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Target Syntax</label>
+            <select id="editTemplateFormat" class="w-full px-2.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-xs text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer">
+              <option value="auto">Universal / Auto</option>
+              <option value="asciidoc">AsciiDoc (.adoc)</option>
+              <option value="markdown">Markdown (.md)</option>
+            </select>
+          </div>
+          <div class="flex flex-col justify-end">
+            <span class="text-[10px] text-slate-400 leading-tight">Placeholders: <code>{{title}}</code>, <code>{{date}}</code>, <code>{{time}}</code>, <code>{{author}}</code></span>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-300">Template Content</label>
+            <div class="flex items-center gap-1">
+              <button type="button" onclick="insertPlaceholderIntoTemplate('{{title}}')" class="px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-700 text-[10px] font-mono text-slate-600 dark:text-slate-300 hover:bg-indigo-50 hover:text-indigo-600 cursor-pointer">+ title</button>
+              <button type="button" onclick="insertPlaceholderIntoTemplate('{{date}}')" class="px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-700 text-[10px] font-mono text-slate-600 dark:text-slate-300 hover:bg-indigo-50 hover:text-indigo-600 cursor-pointer">+ date</button>
+              <button type="button" onclick="insertPlaceholderIntoTemplate('{{author}}')" class="px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-700 text-[10px] font-mono text-slate-600 dark:text-slate-300 hover:bg-indigo-50 hover:text-indigo-600 cursor-pointer">+ author</button>
+            </div>
+          </div>
+          <textarea id="editTemplateContent" rows="9" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-xs font-mono text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 outline-none leading-relaxed resize-y" placeholder="Write template body here..."></textarea>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="p-3.5 px-4 bg-slate-50 dark:bg-slate-900/80 border-t border-slate-100 dark:border-slate-700 flex items-center justify-end gap-2">
+        <button onclick="closeEditTemplateModal()" class="px-3.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 transition cursor-pointer">
+          Cancel
+        </button>
+        <button onclick="saveEditTemplate()" class="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition shadow-sm flex items-center gap-1.5 cursor-pointer">
+          <i class="fa-solid fa-check"></i>
+          <span>Save Template</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Global Tasks Hub -->
+  <div id="tasksHubModal" onclick="if(event.target === this) closeTasksHubModal()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 transition-all">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden max-h-[85vh]">
+      <!-- Header -->
+      <div class="p-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50/80 dark:bg-slate-900/60 shrink-0">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-list-check text-indigo-500 text-base"></i>
+          <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100">Global Tasks Hub</h3>
+        </div>
+        <button onclick="closeTasksHubModal()" title="Close (Esc)" class="w-7 h-7 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center transition cursor-pointer">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Controls: Search & Tabs -->
+      <div class="p-3.5 border-b border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between shrink-0">
+        <!-- Tabs -->
+        <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-700/60 p-1 rounded-xl">
+          <button id="tabTasksPending" onclick="setTasksHubFilter('pending')" class="px-3 py-1 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-xs cursor-pointer">Pending (0)</button>
+          <button id="tabTasksCompleted" onclick="setTasksHubFilter('completed')" class="px-3 py-1 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer">Completed (0)</button>
+          <button id="tabTasksAll" onclick="setTasksHubFilter('all')" class="px-3 py-1 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer">All (0)</button>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex-1 sm:max-w-xs">
+          <i class="fa-solid fa-magnifying-glass text-xs text-slate-400"></i>
+          <input id="tasksHubSearchInput" type="text" placeholder="Search tasks..." oninput="onTasksHubSearch(this.value)" class="w-full bg-transparent border-none outline-none text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400">
+        </div>
+      </div>
+
+      <!-- Tasks List (Scrollable) -->
+      <div id="tasksHubListContainer" class="p-4 overflow-y-auto flex-1 space-y-3 bg-slate-50/30 dark:bg-slate-900/40">
+        <!-- Populated dynamically by renderTasksHubList() -->
+      </div>
+
+      <!-- Footer -->
+      <div class="p-3 px-4 bg-slate-50 dark:bg-slate-900/80 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between text-[11px] text-slate-400 shrink-0">
+        <span>Clicking a task updates the source note directly</span>
+        <button onclick="closeTasksHubModal()" class="px-3.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 transition cursor-pointer">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Interactive Knowledge Graph View -->
+  <div id="knowledgeGraphModal" onclick="if(event.target === this) closeKnowledgeGraphModal()" class="fixed inset-0 bg-black/75 backdrop-blur-md z-50 hidden flex flex-col p-3 sm:p-6 transition-all">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl w-full h-full shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden relative">
+      <!-- Graph Top Controls Bar -->
+      <div class="p-3 sm:p-4 border-b border-slate-150 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-50/90 dark:bg-slate-900/90 shrink-0 z-10">
+        <!-- Title & Mode Toggles -->
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-circle-nodes text-violet-500 text-lg"></i>
+            <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100">Knowledge Graph</h3>
+          </div>
+          <!-- Global vs Local Toggle -->
+          <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+            <button id="btnGraphModeGlobal" onclick="setGraphViewMode('global')" class="px-3 py-1 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-xs cursor-pointer">Global</button>
+            <button id="btnGraphModeLocal" onclick="setGraphViewMode('local')" class="px-3 py-1 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer">Local (Active Note)</button>
+          </div>
+        </div>
+
+        <!-- Filters & Actions -->
+        <div class="flex items-center gap-2 flex-wrap">
+          <!-- Tag Filter -->
+          <div class="flex items-center gap-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-1 text-xs">
+            <i class="fa-solid fa-tag text-slate-400 text-[10px]"></i>
+            <select id="graphFilterTag" onchange="onGraphTagFilterChange(this.value)" class="bg-transparent border-none outline-none text-xs text-slate-700 dark:text-slate-200 cursor-pointer">
+              <option value="all">All Tags</option>
+            </select>
+          </div>
+
+          <!-- Folder Filter -->
+          <div class="flex items-center gap-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-1 text-xs">
+            <i class="fa-regular fa-folder text-slate-400 text-[10px]"></i>
+            <select id="graphFilterFolder" onchange="onGraphFolderFilterChange(this.value)" class="bg-transparent border-none outline-none text-xs text-slate-700 dark:text-slate-200 cursor-pointer">
+              <option value="all">All Folders</option>
+            </select>
+          </div>
+
+          <!-- Reset Zoom Button -->
+          <button onclick="resetGraphView()" title="Reset Zoom & Center" class="px-2.5 py-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-bold transition cursor-pointer">
+            <i class="fa-solid fa-arrows-to-dot text-xs"></i>
+          </button>
+
+          <!-- Close Modal Button -->
+          <button onclick="closeKnowledgeGraphModal()" title="Close Graph (Esc)" class="w-8 h-8 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center transition cursor-pointer">
+            <i class="fa-solid fa-xmark text-sm"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Graph Canvas Container -->
+      <div class="flex-1 w-full h-full relative overflow-hidden bg-slate-50/50 dark:bg-slate-950">
+        <canvas id="knowledgeGraphCanvas" class="w-full h-full block"></canvas>
+
+        <!-- Floating Legend & Hints -->
+        <div class="absolute bottom-3 left-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 px-3 text-[11px] text-slate-500 dark:text-slate-400 pointer-events-none shadow-md flex items-center gap-3">
+          <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span><span>Active</span></div>
+          <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-teal-500 inline-block"></span><span>AsciiDoc</span></div>
+          <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block"></span><span>Markdown</span></div>
+          <div class="hidden sm:inline border-l border-slate-200 dark:border-slate-700 pl-3">Drag nodes to play • Wheel to zoom • Double-click node to open</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Application & Data Backup ZIP Generator -->
+  <div id="appBackupModal" onclick="if(event.target === this) closeAppBackupModal()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 transition-all">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden">
+      
+      <!-- Modal Header -->
+      <div class="p-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50/80 dark:bg-slate-900/60">
+        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+          <i class="fa-solid fa-file-zipper text-indigo-500"></i>
+          <span>Application ZIP Backup</span>
+        </h3>
+        <button onclick="closeAppBackupModal()" title="Close (Esc)" class="w-7 h-7 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center transition cursor-pointer">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-5 space-y-4">
+        <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+          Select what you want to package into the generated <strong>.zip</strong> archive:
+        </p>
+
+        <!-- Options Container -->
+        <div class="space-y-3">
+          <!-- Option 1: App Only -->
+          <label class="flex items-start gap-3 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-600 bg-slate-50/40 dark:bg-slate-900/20 cursor-pointer transition">
+            <input type="radio" id="backupOptionAppOnly" name="backupChoice" value="app" class="mt-0.5 text-indigo-600 focus:ring-indigo-500">
+            <div class="min-w-0">
+              <div class="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                <i class="fa-solid fa-code text-teal-600 dark:text-teal-400"></i>
+                <span>Application Only (Project ZIP)</span>
+              </div>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-normal">
+                Generates a ZIP archive containing all application source code, modules (<code>js/</code>, <code>css/</code>), and offline vendor libraries.
+              </p>
+            </div>
+          </label>
+
+          <!-- Option 2: App + Data -->
+          <label class="flex items-start gap-3 p-3.5 rounded-xl border border-indigo-300 dark:border-indigo-700/80 bg-indigo-50/50 dark:bg-indigo-950/40 cursor-pointer transition ring-1 ring-indigo-500/20">
+            <input type="radio" id="backupOptionAppAndData" name="backupChoice" value="both" checked class="mt-0.5 text-indigo-600 focus:ring-indigo-500">
+            <div class="min-w-0">
+              <div class="text-xs font-bold text-indigo-900 dark:text-indigo-200 flex items-center gap-1.5">
+                <i class="fa-solid fa-database text-indigo-600 dark:text-indigo-400"></i>
+                <span>Application + Workspace Data (Recommended)</span>
+              </div>
+              <p class="text-[11px] text-slate-600 dark:text-slate-300 mt-1 leading-normal">
+                Includes the entire application ZIP <strong>plus</strong> a <code>workspace-data/</code> subfolder containing your complete notes database (JSON), individual note files, and pictures.
+              </p>
+            </div>
+          </label>
+        </div>
+
+        <!-- Restore Section -->
+        <div class="pt-3 border-t border-slate-150 dark:border-slate-700">
+          <div class="text-xs font-bold text-slate-800 dark:text-slate-100 mb-2 flex items-center gap-1.5">
+            <i class="fa-solid fa-cloud-arrow-up text-indigo-500"></i>
+            <span>Restore Workspace Backup</span>
+          </div>
+          <button type="button" onclick="closeAppBackupModal(); document.getElementById('importWorkspaceFileInput').click();" class="w-full py-2.5 px-3 rounded-xl border border-dashed border-indigo-300 dark:border-indigo-700 bg-indigo-50/50 dark:bg-indigo-950/30 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 text-xs font-bold text-indigo-700 dark:text-indigo-300 transition flex items-center justify-center gap-2 cursor-pointer">
+            <i class="fa-solid fa-upload"></i>
+            <span>Restore from .zip or .json backup archive...</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 bg-slate-50 dark:bg-slate-900/80 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+        <span class="text-[11px] text-slate-400 font-mono">Format: .zip</span>
+        <div class="flex items-center gap-2">
+          <button onclick="closeAppBackupModal()" class="px-3.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 transition cursor-pointer">
+            Cancel
+          </button>
+          <button id="btnGenerateZipBackup" onclick="startAppBackup()" class="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition shadow-sm flex items-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-download"></i>
+            <span>Export ZIP</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL: Create New Note / Folder -->
+  <div id="createItemModal" onclick="if(event.target === this) closeCreateItemModal()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 transition-all">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden">
+      
+      <!-- Modal Header -->
+      <div class="p-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50/80 dark:bg-slate-900/60">
+        <h3 id="createItemModalTitle" class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center">
+          <i class="fa-solid fa-file-circle-plus text-indigo-500 mr-2"></i>New Item
+        </h3>
+        <button onclick="closeCreateItemModal()" title="Close (Esc)" class="w-7 h-7 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-5 space-y-4">
+        <!-- Item Name Input -->
+        <div>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">Name</label>
+          <input id="createItemName" 
+                 type="text" 
+                 autocomplete="off" 
+                 spellcheck="false"
+                 onkeydown="if(event.key === 'Enter') submitCreateItemModal(); if(event.key === 'Escape') closeCreateItemModal();"
+                 placeholder="Enter title..." 
+                 class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm font-medium text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+
+        <!-- Target Location Selector -->
+        <div>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">Location in workspace</label>
+          <div class="relative">
+            <select id="createItemFolderSelect" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer">
+              <!-- Dynamically populated with Root Workspace and indented folder tree -->
+            </select>
+          </div>
+        </div>
+
+        <!-- Note Template Selector (Visible only when creating a document) -->
+        <div id="createItemTemplateGroup">
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5 flex items-center justify-between">
+            <span class="flex items-center gap-1.5">
+              <i class="fa-solid fa-stamp text-indigo-500"></i>
+              <span>Template</span>
+            </span>
+            <span class="text-[10px] text-slate-400 font-normal">Optional</span>
+          </label>
+          <div class="relative">
+            <select id="createItemTemplateSelect" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer">
+              <!-- Populated dynamically by openCreateItemModal() -->
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 bg-slate-50 dark:bg-slate-900/80 border-t border-slate-100 dark:border-slate-700 flex items-center justify-end gap-2">
+        <button onclick="closeCreateItemModal()" class="px-3.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 transition cursor-pointer">
+          Cancel
+        </button>
+        <button id="createItemSubmitBtn" onclick="submitCreateItemModal()" class="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition shadow-sm flex items-center cursor-pointer">
+          <i class="fa-solid fa-plus mr-1.5"></i>Create
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL: Quick Switcher & Command Palette (Cmd+K) -->
+  <div id="quickSwitcherModal" onclick="if(event.target === this) closeQuickSwitcher()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-start justify-center pt-16 sm:pt-24 p-4 transition-all">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden">
+      
+      <!-- Search Input Header -->
+      <div class="p-3.5 border-b border-slate-100 dark:border-slate-700/80 flex items-center gap-3 bg-slate-50/80 dark:bg-slate-900/60">
+        <i class="fa-solid fa-magnifying-glass text-indigo-500 text-base pl-2"></i>
+        <input id="quickSwitcherInput" 
+               type="text" 
+               autocomplete="off" 
+               spellcheck="false"
+               oninput="onQuickSwitcherInput(this.value)" 
+               onkeydown="handleQuickSwitcherKeydown(event)"
+               placeholder="Search notes, content or actions... (Cmd+K)" 
+               class="flex-1 bg-transparent border-none outline-none text-sm font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500">
+        <button onclick="closeQuickSwitcher()" title="Close (Esc)" class="w-7 h-7 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Results List (Scrollable) -->
+      <div id="quickSwitcherResults" class="max-h-[60vh] overflow-y-auto p-2 space-y-1 bg-white dark:bg-slate-800">
+        <!-- Rendered dynamically by renderQuickSwitcherResults() -->
+      </div>
+
+      <!-- Footer navigation hints -->
+      <div class="px-4 py-2 bg-slate-50 dark:bg-slate-900/80 border-t border-slate-100 dark:border-slate-700/80 text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between select-none">
+        <div class="flex items-center gap-3">
+          <span><kbd class="px-1.5 py-0.5 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px] font-mono text-slate-600 dark:text-slate-300 shadow-2xs">↑↓</kbd> Navigate</span>
+          <span><kbd class="px-1.5 py-0.5 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px] font-mono text-slate-600 dark:text-slate-300 shadow-2xs">↵</kbd> Open / Select</span>
+          <span><kbd class="px-1.5 py-0.5 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px] font-mono text-slate-600 dark:text-slate-300 shadow-2xs">ESC</kbd> Close</span>
+        </div>
+        <div class="flex items-center gap-1 text-[10px] font-mono">
+          <span class="text-indigo-500 dark:text-indigo-400 font-semibold">⌘K / Ctrl+K</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Insert Image -->
+  <div id="imageModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col max-h-[90vh]">
+      <div class="flex justify-between items-center mb-4 shrink-0">
+        <h3 class="text-base font-bold flex items-center gap-2">
+          <i class="fa-regular fa-image text-teal-600"></i>
+          Insert Image
+        </h3>
+        <button onclick="closeModal('imageModal')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg">&times;</button>
+      </div>
+
+      <!-- Tab Buttons -->
+      <div class="flex border-b border-slate-200 dark:border-slate-700 mb-4 shrink-0 text-xs font-semibold">
+        <button id="tabImgWebBtn" onclick="setImageModalTab('web')" class="flex-1 py-2 text-center border-b-2 border-teal-500 text-teal-600 dark:text-teal-400">Web URL</button>
+        <button id="tabImgLocalBtn" onclick="setImageModalTab('local')" class="flex-1 py-2 text-center border-b-2 border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">Local Attachments</button>
+      </div>
+
+      <!-- Tab Content: Web URL -->
+      <div id="tabImgWebContent" class="space-y-3 text-sm shrink-0">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Image URL *</label>
+          <input id="imgUrl" type="url" placeholder="https://picsum.photos/800/400" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:ring-2 focus:ring-teal-500 outline-none">
+        </div>
+      </div>
+
+      <!-- Tab Content: Local Attachments -->
+      <div id="tabImgLocalContent" class="hidden text-sm flex-col min-h-0 overflow-auto">
+        <input type="file" id="attachImageFileInput" accept="image/*" class="hidden" onchange="handleImageAttachmentUpload(event)">
+        <label for="attachImageFileInput" class="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-indigo-500 rounded-xl p-4 cursor-pointer text-xs transition duration-200 shrink-0 mb-3">
+          <i class="fa-solid fa-cloud-arrow-up text-xl text-slate-400 dark:text-slate-500 mb-1"></i>
+          <span class="font-semibold text-slate-600 dark:text-slate-300">Attach picture from computer</span>
+        </label>
+
+        <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2 shrink-0">Attached to this document:</div>
+        <div id="attachedImagesGallery" class="grid grid-cols-3 gap-2 overflow-y-auto pr-1 flex-1 min-h-[80px] max-h-40 mb-1">
+          <!-- Dynamically populated by renderAttachedImagesGallery() -->
+        </div>
+      </div>
+
+      <!-- Shared Image Attributes & Actions (Common to both Web and Local!) -->
+      <div class="space-y-3 mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 shrink-0 text-sm">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Alternative text (Alt text)</label>
+          <input id="imgAlt" type="text" placeholder="Diagram description..." class="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:ring-2 focus:ring-teal-500 outline-none">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Width (%)</label>
+            <div class="flex items-center gap-1.5">
+              <input id="imgWidth" type="number" min="5" max="100" step="5" placeholder="100" class="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:ring-2 focus:ring-teal-500 outline-none">
+              <span class="font-bold text-slate-400 dark:text-slate-500 select-none">%</span>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Title / Caption</label>
+            <input id="imgTitle" type="text" placeholder="Figure 1: Architecture" class="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:ring-2 focus:ring-teal-500 outline-none">
+          </div>
+        </div>
+        
+        <div class="pt-4 flex justify-end space-x-2 border-t border-slate-100 dark:border-slate-700">
+          <button onclick="closeModal('imageModal')" class="px-4 py-2 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Cancel</button>
+          <button onclick="submitImage()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-teal-600 hover:bg-teal-700 text-white shadow">Insert Image</button>
+        </div>
+      </div>
+    </div>
+  </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Insert Table Generator -->
+  <div id="tableModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-3xl w-full p-8 shadow-2xl border border-slate-200 dark:border-slate-700">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-lg font-bold flex items-center gap-2">
+          <i class="fa-solid fa-table text-blue-600 text-xl"></i>
+          Table Creator
+        </h3>
+        <button onclick="closeModal('tableModal')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-2xl">&times;</button>
+      </div>
+      <div class="space-y-6 text-sm">
+        <p class="text-sm text-slate-500 dark:text-slate-400">
+          Choose the table size. The exact syntax (<span class="font-mono bg-slate-100 dark:bg-slate-700 px-1 rounded">|===</span> for AsciiDoc or <span class="font-mono bg-slate-100 dark:bg-slate-700 px-1 rounded">|---|</span> for Markdown) will be generated automatically.
+        </p>
+        <div class="grid grid-cols-2 gap-6">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2 uppercase tracking-wider">Number of Columns</label>
+            <input id="tblCols" type="number" min="1" max="10" value="3" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:ring-2 focus:ring-teal-500 outline-none transition">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2 uppercase tracking-wider">Number of Rows</label>
+            <input id="tblRows" type="number" min="1" max="25" value="3" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:ring-2 focus:ring-teal-500 outline-none transition">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2 uppercase tracking-wider">Optional table title</label>
+          <input id="tblTitle" type="text" placeholder="Features Table" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:ring-2 focus:ring-teal-500 outline-none transition">
+        </div>
+      </div>
+      <div class="mt-8 flex justify-end space-x-3">
+        <button onclick="closeModal('tableModal')" class="px-5 py-2.5 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition">Cancel</button>
+        <button onclick="submitTable()" class="px-5 py-2.5 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-lg transition">Generate table</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Insert Admonition/Callout -->
+  <div id="admonitionModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-base font-bold flex items-center gap-2">
+          <i class="fa-solid fa-triangle-exclamation text-amber-500"></i>
+          Insert Admonition Block
+        </h3>
+        <button onclick="closeModal('admonitionModal')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg">&times;</button>
+      </div>
+      <div class="space-y-4 text-sm">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Block type</label>
+          <select id="admonitionType" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:ring-2 focus:ring-teal-500 outline-none">
+            <option value="NOTE">NOTE (General information)</option>
+            <option value="TIP">TIP (Advice / Tip)</option>
+            <option value="IMPORTANT">IMPORTANT (Must remember)</option>
+            <option value="WARNING">WARNING (Warning)</option>
+            <option value="CAUTION">CAUTION (Prudence / Danger)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Message</label>
+          <textarea id="admonitionText" rows="3" placeholder="Enter your important note here..." class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:ring-2 focus:ring-teal-500 outline-none"></textarea>
+        </div>
+      </div>
+      <div class="mt-6 flex justify-end space-x-2">
+        <button onclick="closeModal('admonitionModal')" class="px-4 py-2 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Cancel</button>
+        <button onclick="submitAdmonition()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-amber-600 hover:bg-amber-700 text-white shadow">Insert block</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Insert Link -->
+  <div id="linkModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-base font-bold flex items-center gap-2">
+          <i class="fa-solid fa-link text-teal-600"></i>
+          Insert Link
+        </h3>
+        <button onclick="closeModal('linkModal')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg">&times;</button>
+      </div>
+      <div class="space-y-3 text-sm">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Display text</label>
+          <input id="linkText" type="text" placeholder="Official documentation" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:ring-2 focus:ring-teal-500 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Destination URL</label>
+          <input id="linkUrl" type="url" placeholder="https://docs.asciidoctor.org" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:ring-2 focus:ring-teal-500 outline-none">
+        </div>
+      </div>
+      <div class="mt-6 flex justify-end space-x-2">
+        <button onclick="closeModal('linkModal')" class="px-4 py-2 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Cancel</button>
+        <button onclick="submitLink()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-teal-600 hover:bg-teal-700 text-white shadow">Insert link</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: PlantUML Visual Editor -->
+  <div id="pumlEditorModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-[96vw] w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col h-[90vh] max-h-[90vh]">
+      <div class="flex justify-between items-center mb-4 shrink-0">
+        <h3 class="text-base font-bold flex items-center gap-2">
+          <i class="fa-solid fa-diagram-project text-indigo-600"></i>
+          PlantUML Diagram Editor
+        </h3>
+        <button onclick="closeModal('pumlEditorModal')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg">&times;</button>
+      </div>
+
+      <!-- Two-column workspace inside modal (Resizable!) -->
+      <div id="pumlModalSplitterContainer" class="flex-1 flex flex-col md:flex-row gap-4 overflow-hidden min-h-0 relative">
+        <!-- Left: Code Editor (Occupies width controlled by dragging, starts at 60%) -->
+        <div id="pumlModalEditorCol" style="width: 60%;" class="flex flex-col border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-900/50 shrink-0">
+          <div class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 text-[10px] font-bold text-slate-500 uppercase select-none">Diagram Source Code</div>
+          <textarea id="pumlEditorCode" autocorrect="off" autocapitalize="none" autocomplete="off" spellcheck="false" class="flex-1 p-3 font-mono text-xs leading-relaxed outline-none bg-transparent resize-none text-slate-900 dark:text-slate-100 placeholder-slate-400" placeholder="@startuml&#10;Alice -> Bob: Hello&#10;@enduml" oninput="debouncePumlEditorPreview()"></textarea>
+        </div>
+
+        <!-- Vertical Resize Splitter Handle -->
+        <div id="pumlModalSplitterHandle" class="hidden md:block w-1.5 hover:w-2 h-full bg-slate-100 hover:bg-indigo-300 dark:bg-slate-800 dark:hover:bg-indigo-900 cursor-col-resize shrink-0 transition-all z-20 border-r border-slate-200 dark:border-slate-700"></div>
+
+        <!-- Right: Live Preview (Fills remaining horizontal space) -->
+        <div id="pumlModalPreviewCol" class="flex-1 flex flex-col border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-900/50">
+          <div class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 text-[10px] font-bold text-slate-500 uppercase select-none flex items-center justify-between shrink-0">
+            <span class="flex items-center gap-1.5">
+              <i class="fa-regular fa-image text-slate-400"></i>
+              <span>Visual Render</span>
+            </span>
+            <div class="flex items-center gap-2">
+              <span id="pumlModalSpinner" class="hidden text-[9px] text-indigo-600 dark:text-indigo-400 font-semibold animate-pulse mr-1">Rendering...</span>
+              <!-- Fit Page button -->
+              <button onclick="resetPumlModalZoom()" title="Reset zoom and center diagram (Fit Page)" class="px-2 py-1 bg-white hover:bg-slate-100 dark:bg-slate-700 dark:hover:bg-slate-600 rounded text-[9px] font-bold text-indigo-600 dark:text-indigo-400 border border-slate-200 dark:border-slate-600 transition flex items-center gap-1 shadow-sm shrink-0 select-none">
+                <i class="fa-solid fa-expand text-[8px]"></i>
+                <span>Fit Page</span>
+              </button>
+            </div>
+          </div>
+          <div id="pumlModalPreview" class="flex-1 p-4 overflow-hidden flex items-center justify-center bg-white dark:bg-slate-950 cursor-grab select-none">
+            <!-- Rendered SVG will go here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="pt-4 mt-4 border-t border-slate-200 dark:border-slate-700 flex flex-wrap justify-between items-center shrink-0 gap-3">
+        <!-- Quick-access Diagram Width & Title Controllers -->
+        <div class="flex flex-wrap items-center gap-4">
+          <div class="flex items-center gap-2">
+            <label class="text-xs font-bold text-slate-500 dark:text-slate-400 select-none flex items-center gap-1">
+              <i class="fa-solid fa-arrows-left-right text-[10px]"></i>
+              <span>Width (px):</span>
+            </label>
+            <input id="pumlModalWidth" type="number" min="100" max="2000" step="50" value="400" class="w-16 px-2 py-1 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm">
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-xs font-bold text-slate-500 dark:text-slate-400 select-none flex items-center gap-1">
+              <i class="fa-solid fa-quote-left text-[10px]"></i>
+              <span>Title / Caption:</span>
+            </label>
+            <input id="pumlModalTitle" type="text" placeholder="Mon Titre de Diagramme..." class="w-48 sm:w-64 px-2 py-1 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm">
+          </div>
+        </div>
+
+        <div class="flex gap-2">
+          <button onclick="closeModal('pumlEditorModal')" class="px-4 py-2 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Cancel</button>
+          <button onclick="savePumlEditorChanges()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow">Save & Insert Diagram</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Conversion Confirmation & Diff Preview -->
+  <div id="convertModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700">
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="text-base font-bold flex items-center gap-2">
+          <i class="fa-solid fa-right-left text-indigo-500"></i>
+          <span id="convertModalTitle">Convert document</span>
+        </h3>
+        <button onclick="closeModal('convertModal')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg">&times;</button>
+      </div>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mb-4" id="convertModalDescription">
+        The conversion will translate headings, formatted text, lists, quotes, tables, images, and admonitions.
+      </p>
+
+      <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 mb-4 max-h-60 overflow-y-auto font-mono text-xs text-slate-700 dark:text-slate-300">
+        <div class="text-[10px] font-sans font-semibold text-slate-400 uppercase tracking-wider mb-2">Preview of converted result:</div>
+        <pre id="conversionPreviewText" class="whitespace-pre-wrap leading-relaxed select-all"></pre>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="mt-6 flex flex-wrap justify-end gap-2">
+        <button onclick="closeModal('convertModal')" class="px-4 py-2 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
+          Cancel
+        </button>
+        <button onclick="copyConversionResult()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 transition flex items-center gap-1.5">
+          <i class="fa-regular fa-copy"></i>
+          <span>Copy result</span>
+        </button>
+        <button onclick="applyConversion()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white shadow transition flex items-center gap-1.5">
+          <i class="fa-solid fa-check"></i>
+          <span>Apply conversion</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Application Settings (Consolidated settings hub) -->
+  <div id="settingsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col max-h-[85vh]">
+      <!-- Header -->
+      <div class="flex justify-between items-center mb-4 shrink-0 border-b border-slate-100 dark:border-slate-700/60 pb-3">
+        <h3 class="text-base font-bold flex items-center gap-2">
+          <i class="fa-solid fa-gears text-indigo-600"></i>
+          Application Settings
+        </h3>
+        <button onclick="closeModal('settingsModal')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg">&times;</button>
+      </div>
+
+      <!-- Scrollable Body -->
+      <div class="space-y-5 text-sm flex-1 overflow-y-auto pr-1">
+        <!-- SECTION 1: Appearance -->
+        <div class="space-y-3 pb-4 border-b border-slate-100 dark:border-slate-700/60">
+          <span class="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide">Appearance</span>
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">Color Theme</span>
+              <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">Toggle light or dark editor interface.</p>
+            </div>
+            <button onclick="toggleDarkMode()" id="settingsThemeToggle" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-lg text-xs font-bold flex items-center gap-1.5 transition select-none">
+              <i id="settingsThemeIcon" class="fa-solid fa-moon"></i>
+              <span id="settingsThemeText">Dark Mode</span>
+            </button>
+          </div>
+
+          <div class="pt-3 border-t border-slate-100 dark:border-slate-700/40 flex items-start justify-between">
+            <div>
+              <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">Force Preview in Light Mode</span>
+              <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 leading-tight">Keep the document rendering pane in light mode even when using Dark Mode.</p>
+            </div>
+            <div class="flex items-center h-5">
+              <input id="forcePreviewLightMode" type="checkbox" onchange="toggleForcePreviewLightMode(this.checked)" class="rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+            </div>
+          </div>
+
+          <!-- Theme Style Variants Container (Dynamic Light vs Dark) -->
+          <div id="themeVariantsSection" class="pt-3 border-t border-slate-100 dark:border-slate-700/40">
+            <span id="themeVariantsSectionTitle" class="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">Dark Mode Style</span>
+            <p id="themeVariantsSectionDesc" class="text-[10px] text-slate-400 dark:text-slate-500 mb-2 leading-tight">Choose your preferred dark background flavor when Dark Mode is active.</p>
+            
+            <!-- Dark Flavors -->
+            <div id="darkThemeVariantsGroup" class="grid grid-cols-3 gap-2">
+              <!-- Slate -->
+              <label class="flex flex-col items-center p-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-indigo-400 cursor-pointer text-center bg-slate-50 dark:bg-slate-900/40 transition">
+                <input type="radio" name="darkThemeVariant" value="slate" onchange="setDarkThemeVariant(this.value)" class="sr-only">
+                <span class="w-5 h-5 rounded-full bg-[#0f172a] border border-slate-600 mb-1.5 shadow-xs"></span>
+                <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200">Midnight</span>
+                <span class="text-[9px] text-slate-400">Slate</span>
+              </label>
+
+              <!-- OLED / Pure Black -->
+              <label class="flex flex-col items-center p-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-indigo-400 cursor-pointer text-center bg-slate-50 dark:bg-slate-900/40 transition">
+                <input type="radio" name="darkThemeVariant" value="oled" onchange="setDarkThemeVariant(this.value)" class="sr-only">
+                <span class="w-5 h-5 rounded-full bg-[#000000] border border-neutral-700 mb-1.5 shadow-xs"></span>
+                <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200">Pure Black</span>
+                <span class="text-[9px] text-slate-400">OLED</span>
+              </label>
+
+              <!-- Obsidian / Charcoal -->
+              <label class="flex flex-col items-center p-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-indigo-400 cursor-pointer text-center bg-slate-50 dark:bg-slate-900/40 transition">
+                <input type="radio" name="darkThemeVariant" value="obsidian" onchange="setDarkThemeVariant(this.value)" class="sr-only">
+                <span class="w-5 h-5 rounded-full bg-[#111318] border border-slate-700 mb-1.5 shadow-xs"></span>
+                <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200">Obsidian</span>
+                <span class="text-[9px] text-slate-400">Charcoal</span>
+              </label>
+            </div>
+
+            <!-- Light Flavors -->
+            <div id="lightThemeVariantsGroup" class="grid grid-cols-3 gap-2 hidden">
+              <!-- Paper White -->
+              <label class="flex flex-col items-center p-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-indigo-400 cursor-pointer text-center bg-slate-50 dark:bg-slate-900/40 transition">
+                <input type="radio" name="lightThemeVariant" value="paper" onchange="setLightThemeVariant(this.value)" class="sr-only">
+                <span class="w-5 h-5 rounded-full bg-[#ffffff] border border-slate-300 mb-1.5 shadow-xs"></span>
+                <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200">Clean Paper</span>
+                <span class="text-[9px] text-slate-400">White</span>
+              </label>
+
+              <!-- Warm Sepia -->
+              <label class="flex flex-col items-center p-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-amber-400 cursor-pointer text-center bg-slate-50 dark:bg-slate-900/40 transition">
+                <input type="radio" name="lightThemeVariant" value="sepia" onchange="setLightThemeVariant(this.value)" class="sr-only">
+                <span class="w-5 h-5 rounded-full bg-[#fbf7ee] border border-amber-300/80 mb-1.5 shadow-xs"></span>
+                <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200">Warm Sepia</span>
+                <span class="text-[9px] text-slate-400">Ivory Book</span>
+              </label>
+
+              <!-- Nordic Frost -->
+              <label class="flex flex-col items-center p-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-sky-400 cursor-pointer text-center bg-slate-50 dark:bg-slate-900/40 transition">
+                <input type="radio" name="lightThemeVariant" value="nordic" onchange="setLightThemeVariant(this.value)" class="sr-only">
+                <span class="w-5 h-5 rounded-full bg-[#f4f7fb] border border-sky-300/80 mb-1.5 shadow-xs"></span>
+                <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200">Nordic Frost</span>
+                <span class="text-[9px] text-slate-400">Glacier</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-slate-100 dark:border-slate-700/40 space-y-3">
+            <span class="block text-xs font-semibold text-slate-700 dark:text-slate-200">Custom Code Coloring</span>
+            
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="text-[11px] text-slate-600 dark:text-slate-400">Numbers Color</span>
+                <p class="text-[9px] text-slate-400 dark:text-slate-500">Color applied to all numerical digits.</p>
+              </div>
+              <input id="customColorNumbers" type="color" onchange="updateCustomNumbersColor(this.value)" class="w-8 h-8 rounded-lg cursor-pointer border border-slate-200 dark:border-slate-600 bg-transparent p-0">
+            </div>
+
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="text-[11px] text-slate-600 dark:text-slate-400">Special Characters Color</span>
+                <p class="text-[9px] text-slate-400 dark:text-slate-500">Color applied to symbols (*, -, +, ", #, @, etc).</p>
+              </div>
+              <input id="customColorSpecials" type="color" onchange="updateCustomSpecialsColor(this.value)" class="w-8 h-8 rounded-lg cursor-pointer border border-slate-200 dark:border-slate-600 bg-transparent p-0">
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 2: Export & Printing -->
+        <div class="space-y-3 pb-4 border-b border-slate-100 dark:border-slate-700/60">
+          <span class="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide">Export & Printing</span>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1.5">Default Print Zoom Scale</label>
+            <select id="settingPrintZoom" onchange="changeSettingPrintZoom(this.value)" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none text-xs font-semibold text-slate-700 dark:text-slate-200">
+              <option value="50">50% (Ultra Compact)</option>
+              <option value="60">60%</option>
+              <option value="70" selected>70% (Default Compact)</option>
+              <option value="80">80%</option>
+              <option value="90">90%</option>
+              <option value="100">100% (Standard Scale)</option>
+              <option value="110">110%</option>
+              <option value="120">120% (Large Text)</option>
+            </select>
+            <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-1.5 leading-relaxed">
+              Controls the layout scaling percentage applied onto documents, drawings, tables, and sections when printing or exporting to PDF.
+            </p>
+          </div>
+        </div>
+
+        <!-- SECTION 3: Kroki Diagram Engine -->
+        <div class="space-y-3">
+          <span class="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide">Kroki Diagram Engine</span>
+          <div class="space-y-3 p-3 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-200/60 dark:border-slate-700/60 text-xs">
+            <div>
+              <label class="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1">Local Container Server URL</label>
+              <div class="flex gap-2">
+                <input id="krokiServerUrl" type="url" placeholder="http://localhost:8000" oninput="saveKrokiConfig()" onchange="saveKrokiConfig()" class="flex-1 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 font-mono text-xs focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 dark:text-slate-200">
+                <button onclick="testKrokiConnection()" class="px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-[10px] font-bold border border-slate-200 dark:border-slate-600 transition flex items-center gap-1 shrink-0 select-none shadow-sm">
+                  <i class="fa-solid fa-bolt text-amber-500"></i>
+                  <span>Test</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between text-[11px] select-none">
+              <span class="text-slate-500 dark:text-slate-400">Connection Status:</span>
+              <span id="krokiStatusText" class="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Not tested</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Actions -->
+      <div class="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700 flex justify-end shrink-0">
+        <button onclick="closeModal('settingsModal')" class="px-4 py-2 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Spreadsheet Visual Editor -->
+  <div id="tableEditorModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div id="tableEditorModalCard" class="bg-white dark:bg-slate-800 rounded-2xl max-w-[95vw] lg:max-w-7xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col h-[88vh] max-h-[88vh] min-h-0 overflow-hidden">
+      
+      <!-- Modal Header -->
+      <div class="flex justify-between items-center mb-4 shrink-0">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-table text-blue-600 text-lg"></i>
+          <h3 class="text-base font-bold">Visual Table Editor</h3>
+          <span id="tableEditorFormatBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 font-semibold uppercase tracking-wider"></span>
+          <span id="tableEditorDimensionsLabel" class="text-xs text-slate-500 dark:text-slate-400"></span>
+        </div>
+        <button onclick="closeModal('tableEditorModal')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg">&times;</button>
+      </div>
+
+      <!-- Settings & Formatting Controls -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 p-3 bg-slate-50 dark:bg-slate-700/30 rounded-xl border border-slate-200/60 dark:border-slate-700 shrink-0 text-xs">
+        <div class="space-y-2">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div class="sm:col-span-2">
+              <label class="block font-semibold text-slate-600 dark:text-slate-300 mb-1">Table title</label>
+              <input id="editTableTitle" type="text" oninput="onEditTableTitleChange(this.value)" placeholder="Title..." class="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+            <div id="editTableWidthContainer">
+              <label class="block font-semibold text-slate-600 dark:text-slate-300 mb-1">Table Width (%)</label>
+              <div class="flex items-center gap-1.5">
+                <input id="editTableWidth" type="number" min="5" max="100" step="5" oninput="onEditTableWidthChange(this.value)" placeholder="100" class="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:ring-2 focus:ring-blue-500 outline-none">
+                <span class="font-bold text-slate-400 dark:text-slate-500 select-none">%</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1">
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input id="editTableHasHeader" type="checkbox" onchange="onToggleHeaderRow(this.checked)" class="rounded text-blue-600 focus:ring-blue-500 cursor-pointer">
+              <span class="font-medium text-slate-600 dark:text-slate-300">Header row</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input id="toggleTableEditorPreview" type="checkbox" onchange="toggleTablePreview(this.checked)" class="rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+              <span class="font-semibold text-indigo-600 dark:text-indigo-400">Live Preview</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input id="toggleAdvancedTable" type="checkbox" onchange="toggleAdvancedControls(this.checked)" class="rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+              <span class="font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
+                <i class="fa-solid fa-graduation-cap"></i>
+                <span>Advanced Options</span>
+              </span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input id="toggleTableEditorExpandWidth" type="checkbox" onchange="toggleTableEditorExpandWidth(this.checked)" class="rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+              <span class="font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
+                <i class="fa-solid fa-expand"></i>
+                <span>Full Width</span>
+              </span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input id="toggleTableEditorXLCells" type="checkbox" onchange="toggleTableEditorXLCells(this.checked)" class="rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+              <span class="font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
+                <i class="fa-solid fa-arrows-up-down"></i>
+                <span>XL Cells</span>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div class="flex flex-col justify-between gap-2">
+          <div>
+            <span class="block font-semibold text-slate-600 dark:text-slate-300 mb-1">Active cell formatting</span>
+            <div class="flex flex-wrap gap-1.5">
+              <button onclick="formatActiveCell('bold')" title="Bold" class="px-2 py-1.5 rounded bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-600 font-semibold"><i class="fa-solid fa-bold mr-1"></i>Bold</button>
+              <button onclick="formatActiveCell('italic')" title="Italic" class="px-2 py-1.5 rounded bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-600 italic"><i class="fa-solid fa-italic mr-1"></i>Italic</button>
+              <button onclick="formatActiveCell('code')" title="Code" class="px-2 py-1.5 rounded bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-600 font-mono"><i class="fa-solid fa-code mr-1"></i>Code</button>
+              <button onclick="formatActiveCell('badge')" title="Add an [OK] Badge" class="px-2 py-1.5 rounded bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/60"><i class="fa-solid fa-circle-check mr-1"></i>[OK]</button>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex gap-1.5">
+              <button onclick="tableEditorAddCol()" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/40 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 rounded-lg font-semibold flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-plus-circle"></i>
+                <span>+ Column</span>
+              </button>
+              <button onclick="tableEditorAddRow()" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/40 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 rounded-lg font-semibold flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-plus"></i>
+                <span>+ Row</span>
+              </button>
+            </div>
+            
+            <div class="flex gap-1 bg-slate-200 dark:bg-slate-700 p-0.5 rounded-lg border border-slate-300 dark:border-slate-600">
+              <button id="btnTableEditorUndo" onclick="tableEditorUndo()" title="Undo last action" class="px-2.5 py-1 rounded bg-white dark:bg-slate-600 shadow-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-500 font-semibold flex items-center gap-1 transition">
+                <i class="fa-solid fa-arrow-rotate-left"></i>
+                <span>Undo</span>
+              </button>
+              <button id="btnTableEditorRedo" onclick="tableEditorRedo()" title="Redo last action" class="px-2.5 py-1 rounded bg-white dark:bg-slate-600 shadow-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-500 font-semibold flex items-center gap-1 transition">
+                <i class="fa-solid fa-arrow-rotate-right"></i>
+                <span>Redo</span>
+              </button>
+            </div>
+
+            <!-- CSV Import / Export Actions Card -->
+            <div class="flex gap-1 bg-slate-200 dark:bg-slate-700 p-0.5 rounded-lg border border-slate-300 dark:border-slate-600">
+              <input type="file" id="tableEditorCsvFileInput" accept=".csv" class="hidden" onchange="importTableCSV(event)">
+              <label for="tableEditorCsvFileInput" title="Import a CSV file to populate this table" class="px-2.5 py-1 rounded bg-white dark:bg-slate-600 shadow-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-500 font-semibold flex items-center gap-1 cursor-pointer transition select-none">
+                <i class="fa-solid fa-file-import text-blue-500"></i>
+                <span>Import CSV</span>
+              </label>
+              <button onclick="exportTableCSV()" title="Export this table as a CSV file" class="px-2.5 py-1 rounded bg-white dark:bg-slate-600 shadow-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-500 font-semibold flex items-center gap-1 transition">
+                <i class="fa-solid fa-file-export text-emerald-500"></i>
+                <span>Export CSV</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Advanced Actions Bar (Collapsible) -->
+      <div id="advancedTableControls" class="hidden mb-4 p-3 bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200/70 dark:border-indigo-800/60 rounded-xl text-xs flex flex-wrap items-center gap-4 shrink-0 select-none shadow-inner">
+        <div class="font-bold text-indigo-800 dark:text-indigo-300 flex items-center gap-1.5 shrink-0">
+          <i class="fa-solid fa-gears text-[11px]"></i>
+          <span>Advanced Formatting Options:</span>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <label class="flex items-center gap-2 cursor-pointer bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition shadow-sm select-none">
+            <input id="editTableAlignPipes" type="checkbox" checked onchange="saveTableEditorChanges()" class="rounded text-indigo-600 focus:ring-indigo-500">
+            <span>Align '|' vertically inside CodeMirror raw code</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Vertical Stack Layout for Grid and Preview -->
+      <div class="flex-1 flex flex-col gap-4 min-h-0 mb-4 overflow-hidden">
+        <!-- Interactive Spreadsheet Grid (Scrolls independently!) -->
+        <div id="tableEditorGridWrapper" class="flex-1 overflow-auto border border-slate-200 dark:border-slate-700 rounded-xl p-1 bg-slate-50 dark:bg-slate-900 min-h-0">
+          <!-- Dynamically generated by renderTableEditorGrid() -->
+        </div>
+
+        <!-- Live Preview Pane (Scrolls independently!) -->
+        <div id="tableEditorPreviewWrapper" class="flex-1 overflow-auto border border-slate-200 dark:border-slate-700 rounded-xl p-4 bg-white dark:bg-slate-900 hidden flex flex-col min-h-0">
+          <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2 shrink-0 border-b border-slate-100 dark:border-slate-800 pb-1.5 flex items-center justify-between select-none">
+            <span>Rendered Table Preview</span>
+            <span class="text-[9px] font-mono text-indigo-500 bg-indigo-50 dark:bg-indigo-950/40 px-1.5 py-0.5 rounded">Live</span>
+          </div>
+          <div id="tableEditorPreviewContent" class="preview-body flex-1 overflow-auto text-sm leading-relaxed max-w-none">
+            <!-- Rendered HTML will go here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Actions -->
+      <div class="flex justify-end gap-2 shrink-0 pt-2 border-t border-slate-200 dark:border-slate-700">
+        <button onclick="closeModal('tableEditorModal')" class="px-4 py-2 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">
+          Cancel
+        </button>
+        <button onclick="saveTableEditorChanges()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow">
+          Save changes
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Overlay to close sidebar on click outside -->
+  <div id="workspaceOverlay" onclick="toggleWorkspaceSidebar(false)" class="fixed inset-0 bg-black/30 backdrop-blur-sm z-30 hidden transition-opacity duration-300"></div>
+
+  <!-- Toast Notification Message -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-xl border border-slate-700 flex items-center gap-2 text-xs font-medium transform transition-all duration-300 translate-y-20 opacity-0 pointer-events-none">
+    <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400"></i>
+    <span id="toastMsg">Operation successful</span>
+  </div>
+
+  <!-- Floating WikiLink Autocomplete Dropdown -->
+  <div id="wikilinksAutocomplete" class="fixed hidden z-50 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 max-h-60 w-72 overflow-y-auto py-1 text-xs">
+    <!-- Populated dynamically by wikilinks.js -->
+  </div>
+
+  <!-- DocCraft Studio Modular Architecture -->
+  <script src="js/state.js"></script>
+  <script src="js/converters.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/diagrams.js"></script>
+  <script src="js/table-editor.js"></script>
+  <script src="js/project-assets.js"></script>
+  <script src="js/workspace.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/editor.js"></script>
+  <script src="js/quick-switcher.js"></script>
+  <script src="js/wikilinks.js"></script>
+  <script src="js/tags-metadata.js"></script>
+  <script src="js/productivity.js"></script>
+  <script src="js/graph.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
