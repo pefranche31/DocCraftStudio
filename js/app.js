@@ -255,6 +255,21 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Global Save Hotkey: Cmd+S / Ctrl+S
+  window.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+      e.preventDefault();
+      // Immediately save to IndexedDB
+      if (typeof saveCurrentDocument === 'function') {
+        saveCurrentDocument();
+      }
+      // Force immediate flush to connected disk file if active
+      if (typeof flushDiskSync === 'function') {
+        flushDiskSync(true);
+      }
+    }
+  });
+
   // Restore View Layout preference from localStorage
   try {
     const savedLayout = localStorage.getItem('view_layout');
@@ -431,6 +446,11 @@ window.addEventListener('DOMContentLoaded', () => {
   // Initialize local IndexedDB workspace and restore documents
   initWorkspace().then(() => {
     updateGlobalTaskCountBadge();
+    
+    // Initialize Multi-Device File Sync Engine
+    if (typeof initFileSyncEngine === 'function') {
+      initFileSyncEngine();
+    }
   });
 
   // Listen for keyboard shortcuts inside table visual editor modal

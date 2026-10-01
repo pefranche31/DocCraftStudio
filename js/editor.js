@@ -1532,6 +1532,14 @@ function initCodeMirrorEditor() {
     tabSize: 2,
     mode: (currentMode === 'asciidoc') ? 'asciidoc' : 'markdown',
     extraKeys: {
+      "Cmd-S": () => { 
+        if (typeof saveCurrentDocument === 'function') saveCurrentDocument();
+        if (typeof flushDiskSync === 'function') flushDiskSync(true); 
+      },
+      "Ctrl-S": () => { 
+        if (typeof saveCurrentDocument === 'function') saveCurrentDocument();
+        if (typeof flushDiskSync === 'function') flushDiskSync(true); 
+      },
       "Cmd-/": () => { toggleComment(); },
       "Ctrl-/": () => { toggleComment(); },
       "Cmd-F": () => { showSearchReplace(); },

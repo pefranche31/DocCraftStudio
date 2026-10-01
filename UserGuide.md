@@ -21,6 +21,7 @@
 11. [PlantUML Diagrams & Visual Tables](#11-plantuml-diagrams--visual-tables)
 12. [Visual Themes (Light & Dark)](#12-visual-themes-light--dark)
 13. [Backups, Export & 100% Offline Security](#13-backups-export--100-offline-security)
+14. [Multi-Device File Synchronization (Google Drive, Syncthing, Dropbox)](#14-multi-device-file-synchronization-google-drive-syncthing-dropbox)
 
 ---
 
@@ -28,8 +29,8 @@
 
 The application is organized around 3 primary zones:
 
-* **Top Navigation Bar (Navbar):** Quick search, productivity tools (Daily, Tasks, Graph, Zen), layout switcher, and settings.
-* **Left Sidebar (Explorer):** Folder and note tree hierarchy (recursive drag-and-drop), tags explorer, pinned notes, recent history, and trash bin.
+* **Top Navigation Bar (Navbar):** Quick search, productivity tools (Daily, Tasks, Graph, Zen), cloud/file sync indicator, layout switcher, and settings.
+* **Left Sidebar (Explorer):** Folder and note tree hierarchy (recursive drag-and-drop), tags explorer, pinned notes, recent history, sync controls, and trash bin.
 * **Central Workspace:** Split according to your preferences between the source code editor (CodeMirror) and the real-time rendered preview pane.
 
 ---
@@ -46,7 +47,7 @@ The application is organized around 3 primary zones:
 | **`Cmd + Alt + 1`** | **`Ctrl + Alt + 1`** | **Split View** (Code editor + Live preview) |
 | **`Cmd + Alt + 2`** | **`Ctrl + Alt + 2`** | **Code-Only View** (Full-width editor) |
 | **`Cmd + Alt + 3`** | **`Ctrl + Alt + 3`** | **Preview-Only View** (Reading and proofreading) |
-| **`Cmd + S`** | **`Ctrl + S`** | Force save (autosave is also continuously active) |
+| **`Cmd + S`** | **`Ctrl + S`** | **Force save to IndexedDB & connected Sync File** |
 | **`Cmd + F`** | **`Ctrl + F`** | Find and replace in code editor |
 | **`Cmd + Z`** / **`Cmd + Shift + Z`** | **`Ctrl + Z`** / **`Ctrl + Y`** | Undo / Redo in editor |
 | **`Cmd + B`** | **`Ctrl + B`** | Bold selected text |
@@ -65,6 +66,7 @@ From left to right across the navigation bar:
 * ✅ **Tasks:** Opens the **Global Task Hub** with a badge indicating the number of pending tasks.
 * 🌌 **Graph (`Cmd+G`):** Opens the **Interactive Knowledge Graph**.
 * 🧘 **Zen (`F11`):** Activates distraction-free focus writing mode.
+* 🔄 **Sync Indicator & Manager:** Status badge indicating whether the workspace is in local browser mode (⚪) or actively synchronized to a disk file (🟢) for Google Drive or Syncthing. Clicking opens the **Multi-Device Sync Manager**.
 * ⚙️ **Kroki / Status:** Connection indicator for the local Kroki diagram engine (port 8000 by default).
 * 🔄 **View Switcher:**
   * **Split:** Side-by-side view (code + preview).
@@ -241,6 +243,31 @@ Access variants in **Settings (⚙️)**:
 
 ---
 
+## 14. Multi-Device File Synchronization (Google Drive, Syncthing, Dropbox)
+
+DocCraft Studio includes native direct-to-disk synchronization powered by the **File System Access API** (available on Chromium browsers: Chrome, Edge, Brave, Opera).
+
+### Why Sync Directly to a File?
+Browser storage (`IndexedDB`) is isolated to a single machine. By connecting a synchronized JSON file:
+* Your notes, folders, and images are automatically mirrored into a real file on your hard drive (e.g., `~/Google Drive/MonDataHub/doccraft/doccraft-data.json` or `~/Sync/doccraft-data.json`).
+* Third-party synchronization tools (**Syncthing**, **Google Drive**, **Dropbox**, **Nextcloud**) transparently sync this file across your computers (MacBook, Linux Fedora, Windows) with **zero server dependencies**!
+* If Internet goes down, DocCraft continues writing to your local disk and IndexedDB without interruption.
+
+### Connecting a Sync File:
+1. Click the **Sync** button in the top navigation bar or **Multi-Device Sync** in the left sidebar footer.
+2. Select:
+   * **Connect Existing JSON File:** Choose a `doccraft-data.json` file already shared or created on another machine. If a conflict is detected with local notes, you can choose to overwrite local data, merge, or overwrite the file with your local notes.
+   * **Create New Sync File:** Export your current workspace into a new JSON file in your sync folder.
+3. Once connected, the header badge turns 🟢 **Sync: [filename.json]**, and the editor status badge displays **Saved to disk**.
+
+### Real-Time Sync & Save:
+* **Automatic Debounced Save:** Every change made in your notes or tree is saved immediately to IndexedDB and debounced (~1s) to the connected file.
+* **Manual Instant Save:** Press **`Cmd + S`** (macOS) or **`Ctrl + S`** (Windows / Linux) at any time to instantly flush all changes to disk.
+* **External Changes Detection:** When another computer modifies the file, returning to the DocCraft tab automatically detects the external update and displays an **External Updates Detected** banner offering a one-click **Reload Workspace**.
+* **Browser Permissions:** The handle is securely remembered in IndexedDB across browser reloads. On startup, simply click the prompt badge once to grant permission.
+
+---
+
 *DocCraft Studio — Built to last, designed for focus.*
 
 ---
@@ -268,6 +295,7 @@ Access variants in **Settings (⚙️)**:
 11. [Diagrammes PlantUML & Tableaux Visuels](#11-diagrammes-plantuml--tableaux-visuels)
 12. [Thèmes Visuels (Clairs & Sombres)](#12-thèmes-visuels-clairs--sombres)
 13. [Sauvegardes, Export & Sécurité 100% Hors-Ligne](#13-sauvegardes-export--sécurité-100-hors-ligne)
+14. [Synchronisation Multi-Appareils (Google Drive, Syncthing, Dropbox)](#14-synchronisation-multi-appareils-google-drive-syncthing-dropbox)
 
 ---
 
@@ -275,8 +303,8 @@ Access variants in **Settings (⚙️)**:
 
 L'application s'articule autour de 3 zones principales :
 
-* **La Barre Supérieure (Navbar) :** Recherche rapide, accès aux outils de productivité (Daily, Tâches, Graphe, Zen), sélecteur de disposition et paramètres.
-* **Le Panneau Latéral Gauche (Explorateur) :** Arborescence des dossiers et notes (glisser-déposer récursif), explorateur de tags, notes épinglées, historique récent et corbeille.
+* **La Barre Supérieure (Navbar) :** Recherche rapide, accès aux outils de productivité (Daily, Tâches, Graphe, Zen), indicateur de synchronisation disque/cloud, sélecteur de disposition et paramètres.
+* **Le Panneau Latéral Gauche (Explorateur) :** Arborescence des dossiers et notes (glisser-déposer récursif), explorateur de tags, notes épinglées, historique récent, accès à la synchronisation multi-appareils et corbeille.
 * **L'Espace Central de Travail :** Divisé selon tes préférences entre l'éditeur de code source (CodeMirror) et le volet de prévisualisation rendu en temps réel.
 
 ---
@@ -293,7 +321,7 @@ L'application s'articule autour de 3 zones principales :
 | **`Cmd + Alt + 1`** | **`Ctrl + Alt + 1`** | **Vue Partagée** (Éditeur de code + Prévisualisation) |
 | **`Cmd + Alt + 2`** | **`Ctrl + Alt + 2`** | **Vue Code Seul** (Éditeur plein format) |
 | **`Cmd + Alt + 3`** | **`Ctrl + Alt + 3`** | **Vue Prévisualisation Seule** (Lecture et relecture) |
-| **`Cmd + S`** | **`Ctrl + S`** | Sauvegarde forcée (l'enregistrement est par ailleurs automatique) |
+| **`Cmd + S`** | **`Ctrl + S`** | **Sauvegarde forcée dans IndexedDB et dans le fichier synchronisé** |
 | **`Cmd + F`** | **`Ctrl + F`** | Rechercher et remplacer dans l'éditeur de code |
 | **`Cmd + Z`** / **`Cmd + Shift + Z`** | **`Ctrl + Z`** / **`Ctrl + Y`** | Annuler / Rétablir dans l'éditeur |
 | **`Cmd + B`** | **`Ctrl + B`** | Mettre en **gras** la sélection |
@@ -312,6 +340,7 @@ De gauche à droite dans la barre de navigation :
 * ✅ **Tasks :** Ouvre le **Hub Global des Tâches** avec le badge indiquant le nombre de tâches en attente.
 * 🌌 **Graph (`Cmd+G`) :** Affiche le **Graphe interactif de connaissances**.
 * 🧘 **Zen (`F11`) :** Active le mode d'écriture sans distraction.
+* 🔄 **Indicateur & Gestionnaire de Synchro :** Badge indiquant si l'espace est en mode local navigateur (⚪) ou synchronisé en continu sur un fichier disque (🟢) (Google Drive, Syncthing, Dropbox). Un clic ouvre le **Gestionnaire de Synchronisation Multi-Appareils**.
 * ⚙️ **Kroki / Statut :** Indicateur de connexion au moteur de diagrammes local Kroki (port 8000 par défaut).
 * 🔄 **Bascule de Vue :**
   * **Split :** Affichage côte à côte (code + aperçu).
@@ -485,6 +514,31 @@ Accède aux variantes dans les **Paramètres (⚙️)** :
 
 ### Restauration universelle :
 * Clique sur **Restore (.zip / .json)** dans la barre latérale pour restaurer instantanément un carnet complet à partir d'un fichier `.json` ou d'une archive `.zip`.
+
+---
+
+## 14. Synchronisation Multi-Appareils (Google Drive, Syncthing, Dropbox)
+
+DocCraft Studio intègre un moteur natif de synchronisation directe sur disque dur basé sur la **File System Access API** (disponible sous Chrome, Brave, Edge, Opera).
+
+### Pourquoi synchroniser vers un fichier sur disque ?
+Le stockage interne du navigateur (`IndexedDB`) est strictement cloisonné sur chaque machine physique. En reliant un fichier JSON synchronisé :
+* Vos notes, dossiers et images sont automatiquement répliqués dans un vrai fichier sur votre disque (ex. `~/Google Drive/MonDataHub/doccraft/doccraft-data.json` ou `~/Sync/doccraft-data.json`).
+* Les outils tiers de synchronisation (**Syncthing**, **Google Drive**, **Dropbox**, **Nextcloud**) répliquent ce fichier de façon transparente entre vos machines (MacBook, PC Fedora, etc.) **sans dépendre d'un serveur distant actif**.
+* En cas de coupure réseau, DocCraft continue d'écrire localement sans aucune interruption.
+
+### Connecter un fichier synchronisé :
+1. Cliquez sur le bouton **Sync** dans la barre supérieure ou sur **Multi-Device Sync** dans le pied de page du panneau latéral gauche.
+2. Choisissez :
+   * **Connecter un fichier JSON existant :** Sélectionnez un fichier `doccraft-data.json` déjà synchronisé depuis un autre poste. En cas de conflit avec des notes locales existantes, vous pouvez remplacer les données locales, fusionner ou écraser le fichier avec vos données locales.
+   * **Créer un nouveau fichier de synchronisation :** Exporte votre espace de travail actuel vers un nouveau fichier JSON dans votre répertoire partagé.
+3. Une fois connecté, le badge de l'en-tête devient 🟢 **Sync: [nom_du_fichier.json]**, et l'éditeur indique **Saved to disk**.
+
+### Sauvegarde & Détection en Temps Réel :
+* **Sauvegarde transparente automatique :** Chaque modification est immédiatement enregistrée dans IndexedDB et réécrite avec un debounce (~1s) dans le fichier sur disque.
+* **Sauvegarde instantanée forcée :** Appuyez sur **`Cmd + S`** (macOS) ou **`Ctrl + S`** (Windows / Linux) pour forcer l'écriture immédiate sur le disque.
+* **Détection des modifications externes :** Si un autre ordinateur met à jour le fichier (via Syncthing ou Drive), DocCraft détecte le changement dès que vous revenez sur l'onglet et affiche un bandeau **Modifications externes détectées** avec un bouton pour **Recharger l'espace**.
+* **Mémorisation des accès :** Le lien vers le fichier est mémorisé dans IndexedDB. Au redémarrage du navigateur, un simple clic sur le badge permet de réautoriser l'accès en toute sécurité.
 
 ---
 

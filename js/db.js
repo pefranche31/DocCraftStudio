@@ -43,6 +43,50 @@ function initDB() {
   });
 }
 
+function dbGetConfig(key) {
+  return new Promise((resolve, reject) => {
+    if (!dbInstance) return resolve(null);
+    const tx = dbInstance.transaction('config', 'readonly');
+    const store = tx.objectStore('config');
+    const request = store.get(key);
+    request.onsuccess = () => resolve(request.result || null);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function dbSaveConfig(configObj) {
+  return new Promise((resolve, reject) => {
+    if (!dbInstance) return resolve();
+    const tx = dbInstance.transaction('config', 'readwrite');
+    const store = tx.objectStore('config');
+    const request = store.put(configObj);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function dbDeleteConfig(key) {
+  return new Promise((resolve, reject) => {
+    if (!dbInstance) return resolve();
+    const tx = dbInstance.transaction('config', 'readwrite');
+    const store = tx.objectStore('config');
+    const request = store.delete(key);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function dbGetAllAttachments() {
+  return new Promise((resolve, reject) => {
+    if (!dbInstance) return resolve([]);
+    const tx = dbInstance.transaction('attachments', 'readonly');
+    const store = tx.objectStore('attachments');
+    const request = store.getAll();
+    request.onsuccess = () => resolve(request.result || []);
+    request.onerror = () => reject(request.error);
+  });
+}
+
 function dbGetDocuments() {
   return new Promise((resolve, reject) => {
     if (!dbInstance) return resolve([]);
@@ -75,7 +119,10 @@ function dbSaveDocument(docObj) {
     const tx = dbInstance.transaction('documents', 'readwrite');
     const store = tx.objectStore('documents');
     const request = store.put(docObj);
-    request.onsuccess = () => resolve();
+    request.onsuccess = () => {
+      if (typeof scheduleDiskSync === 'function') scheduleDiskSync();
+      resolve();
+    };
     request.onerror = () => reject(request.error);
   });
 }
@@ -98,6 +145,7 @@ function dbDeleteDocument(id) {
         attachStore.delete(cursor.primaryKey);
         cursor.continue();
       } else {
+        if (typeof scheduleDiskSync === 'function') scheduleDiskSync();
         resolve();
       }
     };
@@ -133,7 +181,10 @@ function dbSaveFolder(folderObj) {
     const tx = dbInstance.transaction('folders', 'readwrite');
     const store = tx.objectStore('folders');
     const request = store.put(folderObj);
-    request.onsuccess = () => resolve();
+    request.onsuccess = () => {
+      if (typeof scheduleDiskSync === 'function') scheduleDiskSync();
+      resolve();
+    };
     request.onerror = () => reject(request.error);
   });
 }
@@ -157,7 +208,10 @@ async function cascadeDeleteFolder(folderId) {
   const store = tx.objectStore('folders');
   await new Promise((resolve) => {
     const req = store.delete(folderId);
-    req.onsuccess = () => resolve();
+    req.onsuccess = () => {
+      if (typeof scheduleDiskSync === 'function') scheduleDiskSync();
+      resolve();
+    };
   });
 }
 
@@ -179,7 +233,10 @@ function dbSaveAttachment(attachObj) {
     const tx = dbInstance.transaction('attachments', 'readwrite');
     const store = tx.objectStore('attachments');
     const request = store.put(attachObj);
-    request.onsuccess = () => resolve();
+    request.onsuccess = () => {
+      if (typeof scheduleDiskSync === 'function') scheduleDiskSync();
+      resolve();
+    };
     request.onerror = () => reject(request.error);
   });
 }
@@ -190,7 +247,10 @@ function dbDeleteAttachment(id) {
     const tx = dbInstance.transaction('attachments', 'readwrite');
     const store = tx.objectStore('attachments');
     const request = store.delete(id);
-    request.onsuccess = () => resolve();
+    request.onsuccess = () => {
+      if (typeof scheduleDiskSync === 'function') scheduleDiskSync();
+      resolve();
+    };
     request.onerror = () => reject(request.error);
   });
 }

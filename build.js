@@ -14,6 +14,7 @@ const jsFiles = [
   'state.js',
   'converters.js',
   'db.js',
+  'sync.js',
   'diagrams.js',
   'table-editor.js',
   'project-assets.js',

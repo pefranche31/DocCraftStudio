@@ -69,6 +69,11 @@ DocCraft Studio was built and refined through **vibe coding**—a collaborative 
 * **Collapsible Sidebar Sections**: Click **Tags** or **Recently Opened** in the left sidebar to fold/unfold them, freeing up vertical space for your notebook tree.
 * **One-Click Backups**: Export your entire vault as a clean `.zip` archive containing raw `.adoc`/`.md` files or a structured JSON snapshot.
 
+### 🔄 Multi-Device Sync (Google Drive, Syncthing, Dropbox)
+* **Direct Disk File Persistence**: Connect a `doccraft-data.json` file on your hard drive via the native **File System Access API** (Chrome, Edge, Brave).
+* **Zero-Server Multi-Machine Flow**: Keep your MacBook and Linux / Windows computers in perfect sync by pointing DocCraft to your Syncthing or Google Drive shared folder.
+* **Automatic Background Sync & External Change Alerts**: Continuous debounced autosave, manual instant push (`Cmd+S`), and proactive conflict detection when files are modified on other devices.
+
 ### ✅ Two-Way Interactive Task Hub
 * Interactive checklist items (`- [ ]` in Markdown, `* [ ]` in AsciiDoc).
 * **Live bi-directional sync**: Clicking a checkbox in the preview pane updates the raw source document in the editor in real time!
@@ -135,6 +140,7 @@ docker run -d -p 8000:8000 yuzutech/kroki
 | **`Cmd + Alt + 1`** | **`Ctrl + Alt + 1`** | **Split View** (Editor + Live Preview) |
 | **`Cmd + Alt + 2`** | **`Ctrl + Alt + 2`** | **Editor-Only View** |
 | **`Cmd + Alt + 3`** | **`Ctrl + Alt + 3`** | **Preview-Only View** |
+| **`Cmd + S`** | **`Ctrl + S`** | **Save & Push to Disk File / IndexedDB** |
 | **`[[`** | **`[[`** | **Trigger WikiLink autocomplete** |
 | **`Esc`** | **`Esc`** | Exit Zen Mode, close search, dismiss modal |
 
@@ -153,6 +159,7 @@ DocCraft/
 │   ├── app.js            # App bootstrap & event wiring
 │   ├── state.js          # Reactive application state store
 │   ├── db.js             # IndexedDB persistence layer
+│   ├── sync.js           # Multi-device File System Access API sync engine
 │   ├── editor.js         # CodeMirror 5 integration & keymaps
 │   ├── converters.js     # Asciidoctor.js & Marked converters
 │   ├── wikilinks.js      # Bi-directional link parser & backlinks index
