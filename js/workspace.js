@@ -1148,9 +1148,14 @@ async function packageAndDownloadProjectZip(includeData = true) {
   if (includeData) {
     const [docs, folders] = await Promise.all([dbGetDocuments(), dbGetFolders()]);
     const attachments = [];
+    const allTables = [];
     for (const d of docs) {
       const atts = await dbGetAttachments(d.id);
       attachments.push(...atts);
+      if (typeof dbGetTablesByDoc === 'function') {
+        const tbls = await dbGetTablesByDoc(d.id);
+        allTables.push(...tbls);
+      }
     }
 
     const backupObj = {
@@ -1158,7 +1163,8 @@ async function packageAndDownloadProjectZip(includeData = true) {
       exportedAt: Date.now(),
       folders: folders,
       documents: docs,
-      attachments: attachments
+      attachments: attachments,
+      tables: allTables
     };
 
     const dataFolder = zip.folder('workspace-data');
@@ -1220,9 +1226,14 @@ async function exportWorkspaceJSON() {
     const [docs, folders] = await Promise.all([dbGetDocuments(), dbGetFolders()]);
     
     const attachments = [];
+    const allTables = [];
     for (const docObj of docs) {
       const atts = await dbGetAttachments(docObj.id);
       attachments.push(...atts);
+      if (typeof dbGetTablesByDoc === 'function') {
+        const tbls = await dbGetTablesByDoc(docObj.id);
+        allTables.push(...tbls);
+      }
     }
 
     const backupObj = {
@@ -1230,7 +1241,8 @@ async function exportWorkspaceJSON() {
       exportedAt: Date.now(),
       folders: folders,
       documents: docs,
-      attachments: attachments
+      attachments: attachments,
+      tables: allTables
     };
 
     const jsonString = JSON.stringify(backupObj, null, 2);
@@ -1286,12 +1298,12 @@ async function restoreWorkspaceFromData(data) {
   const clearAll = confirm("Click OK to OVERWRITE and replace current workspace items, or CANCEL to MERGE (import alongside existing items).");
 
   if (clearAll) {
-    const tx = dbInstance.transaction(['documents', 'folders', 'attachments'], 'readwrite');
-    await Promise.all([
-      tx.objectStore('documents').clear(),
-      tx.objectStore('folders').clear(),
-      tx.objectStore('attachments').clear()
-    ]);
+    const storesToClear = ['documents', 'folders', 'attachments'];
+    if (dbInstance && dbInstance.objectStoreNames.contains('tables')) {
+      storesToClear.push('tables');
+    }
+    const tx = dbInstance.transaction(storesToClear, 'readwrite');
+    await Promise.all(storesToClear.map(s => tx.objectStore(s).clear()));
     expandedFolders.clear();
   }
 
@@ -1305,6 +1317,12 @@ async function restoreWorkspaceFromData(data) {
 
   for (const att of data.attachments) {
     await dbSaveAttachment(att);
+  }
+
+  if (Array.isArray(data.tables) && typeof dbSaveTable === 'function') {
+    for (const tbl of data.tables) {
+      await dbSaveTable(tbl);
+    }
   }
 
   renderWorkspaceDocList();

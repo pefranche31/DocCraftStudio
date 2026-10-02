@@ -241,7 +241,11 @@ function updateTableBadges() {
         pill.querySelector('.btn-edit-table').addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
-          openTableVisualEditor(tbl);
+          if (typeof showTableEditorChoice === 'function') {
+            showTableEditorChoice(tbl);
+          } else {
+            openTableVisualEditor(tbl);
+          }
         });
 
         const bookmark = cmEditor.setBookmark(
@@ -327,7 +331,11 @@ function updateTableBadges() {
         pill.querySelector('.btn-edit-table').addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
-          openTableVisualEditor(tbl);
+          if (typeof showTableEditorChoice === 'function') {
+            showTableEditorChoice(tbl);
+          } else {
+            openTableVisualEditor(tbl);
+          }
         });
 
         const mark = cmEditor.markText(
@@ -643,10 +651,22 @@ function toggleTableEditorXLCells(checked) {
 }
 
 /**
- * Opens visual spreadsheet modal for the given table block
+ * Opens visual spreadsheet modal for the given table block or library item
  */
-function openTableVisualEditor(tbl) {
-  currentEditingTable = parseTableBlock(tbl);
+function openTableVisualEditor(tbl, libraryTableId = null) {
+  if (tbl && tbl.rows && Array.isArray(tbl.rows)) {
+    currentEditingTable = JSON.parse(JSON.stringify(tbl));
+    currentEditingTable.libraryTableId = libraryTableId || tbl.id || null;
+    if (!currentEditingTable.format) {
+      currentEditingTable.format = (typeof currentMode !== 'undefined' ? currentMode : 'asciidoc');
+    }
+    if (!currentEditingTable.colWidths) {
+      currentEditingTable.colWidths = Array(currentEditingTable.rows[0].length).fill('1');
+    }
+  } else {
+    currentEditingTable = parseTableBlock(tbl);
+    currentEditingTable.libraryTableId = libraryTableId || null;
+  }
   if (!currentEditingTable.asciidocStyles) {
     currentEditingTable.asciidocStyles = Array(currentEditingTable.rows[0].length).fill(true);
   }
@@ -1447,13 +1467,27 @@ function updateTableEditorPreview() {
  * Serializes edited table back into AsciiDoc or Markdown string
  */
 function serializeTableToString(tableData) {
-  const title = document.getElementById('editTableTitle').value.trim();
-  const hasHeader = document.getElementById('editTableHasHeader').checked;
+  if (!tableData || !tableData.rows || tableData.rows.length === 0) return "";
+  const titleEl = document.getElementById('editTableTitle');
+  const title = (titleEl ? titleEl.value.trim() : '') || (tableData.title || '').trim();
+  const headerEl = document.getElementById('editTableHasHeader');
+  const hasHeader = headerEl ? headerEl.checked : (tableData.hasHeader !== false);
   const alignPipesInput = document.getElementById('editTableAlignPipes');
   const alignPipes = alignPipesInput ? alignPipesInput.checked : true;
   const isAdoc = (tableData.format === 'asciidoc');
-  const numCols = tableData.rows[0].length;
+  const numCols = tableData.rows[0] ? tableData.rows[0].length : 0;
+  if (numCols === 0) return "";
   let out = "";
+
+  const colWidths = (tableData.colWidths && tableData.colWidths.length >= numCols)
+    ? tableData.colWidths
+    : Array(numCols).fill('1');
+  const asciidocStyles = (tableData.asciidocStyles && tableData.asciidocStyles.length >= numCols)
+    ? tableData.asciidocStyles
+    : Array(numCols).fill(true);
+  const alignments = (tableData.alignments && tableData.alignments.length >= numCols)
+    ? tableData.alignments
+    : Array(numCols).fill('left');
 
   const colMaxLengths = Array(numCols).fill(0);
   if (alignPipes) {
@@ -1474,8 +1508,8 @@ function serializeTableToString(tableData) {
 
   if (isAdoc) {
     if (title) out += `.${title}\n`;
-    const colsAttr = tableData.colWidths.slice(0, numCols).map((w, idx) => {
-      const hasAsciidocStyle = (tableData.asciidocStyles && tableData.asciidocStyles[idx]);
+    const colsAttr = colWidths.slice(0, numCols).map((w, idx) => {
+      const hasAsciidocStyle = (asciidocStyles && asciidocStyles[idx]);
       return hasAsciidocStyle ? `${w}a` : w;
     }).join(',');
     const optsAttr = hasHeader ? ', options="header"' : '';
@@ -1514,7 +1548,7 @@ function serializeTableToString(tableData) {
             let cellVal = tableData.rows[r][c] || '';
             cellVal = cellVal.replace(/\|/g, '\\|');
             
-            const isAsciidocCol = (tableData.asciidocStyles && tableData.asciidocStyles[c]);
+            const isAsciidocCol = (asciidocStyles && asciidocStyles[c]);
             if (isAsciidocCol) {
               cellVal = cellVal.replace(/\r?\n/g, "\n");
             } else {
@@ -1552,7 +1586,7 @@ function serializeTableToString(tableData) {
       const cellStr = alignPipes ? cellVal.padEnd(colMaxLengths[c]) : cellVal;
       headerRow += ` ${cellStr} |`;
       
-      const align = tableData.alignments[c] || 'left';
+      const align = alignments[c] || 'left';
       const dashLen = alignPipes ? colMaxLengths[c] : 3;
       let dashes = '-'.repeat(dashLen);
       if (align === 'center') {
@@ -1592,58 +1626,89 @@ function toggleAdvancedControls(checked) {
 }
 
 /**
- * Saves changes and replaces lines in CodeMirror editor
+ * Saves changes and replaces lines in CodeMirror editor (and updates library if linked)
  */
 function saveTableEditorChanges() {
-  if (!currentEditingTable || !cmEditor) return;
+  if (!currentEditingTable) return;
 
-  let newTableCode = serializeTableToString(currentEditingTable);
-  if (newTableCode.endsWith('\n')) {
-    newTableCode = newTableCode.slice(0, -1);
-  }
+  const newTitle = document.getElementById('editTableTitle') ? document.getElementById('editTableTitle').value.trim() : (currentEditingTable.title || '');
+  const hasHeader = document.getElementById('editTableHasHeader') ? document.getElementById('editTableHasHeader').checked : currentEditingTable.hasHeader;
   
-  let startLine = currentEditingTable.startLine;
+  currentEditingTable.title = newTitle;
+  currentEditingTable.hasHeader = hasHeader;
+
+  // 1. If this table is linked to library, update IndexedDB record
+  if (currentEditingTable.libraryTableId && typeof dbSaveTable === 'function') {
+    dbGetTable(currentEditingTable.libraryTableId).then(existing => {
+      if (existing) {
+        existing.name = newTitle || existing.name;
+        existing.data = currentEditingTable.rows;
+        existing.formatOptions = {
+          hasHeader: hasHeader,
+          colAlignments: currentEditingTable.alignments,
+          colWidths: currentEditingTable.colWidths
+        };
+        existing.updatedAt = Date.now();
+        dbSaveTable(existing).then(() => {
+          if (typeof renderTableLibraryUI === 'function') {
+            renderTableLibraryUI();
+          }
+        });
+      }
+    });
+  }
+
+  // 2. If table is present in active CodeMirror document, replace lines
+  const startLine = currentEditingTable.startLine;
   const endLine = currentEditingTable.endLine;
 
-  if (currentEditingTable.format === 'asciidoc') {
-    let checkLine = startLine;
-    if (checkLine > 0) {
-      const prev = cmEditor.getLine(checkLine - 1).trim();
-      if (prev.startsWith('[') && prev.endsWith(']')) {
-        checkLine = checkLine - 1;
+  if (startLine !== undefined && endLine !== undefined && cmEditor) {
+    let newTableCode = serializeTableToString(currentEditingTable);
+    if (newTableCode.endsWith('\n')) {
+      newTableCode = newTableCode.slice(0, -1);
+    }
+
+    let actualStartLine = startLine;
+    if (currentEditingTable.format === 'asciidoc') {
+      let checkLine = startLine;
+      if (checkLine > 0) {
+        const prev = cmEditor.getLine(checkLine - 1) ? cmEditor.getLine(checkLine - 1).trim() : '';
+        if (prev.startsWith('[') && prev.endsWith(']')) {
+          checkLine = checkLine - 1;
+        }
+      }
+      if (checkLine > 0) {
+        const prevTitle = cmEditor.getLine(checkLine - 1) ? cmEditor.getLine(checkLine - 1).trim() : '';
+        if (prevTitle.startsWith('.') && !prevTitle.startsWith('...')) {
+          actualStartLine = checkLine - 1;
+        }
+      }
+    } else {
+      if (startLine > 0) {
+        const prev = cmEditor.getLine(startLine - 1) ? cmEditor.getLine(startLine - 1).trim() : '';
+        if (prev.match(/^#{1,4}\s+(.*)$/)) {
+          actualStartLine = startLine - 1;
+        }
       }
     }
-    if (checkLine > 0) {
-      const prevTitle = cmEditor.getLine(checkLine - 1).trim();
-      if (prevTitle.startsWith('.') && !prevTitle.startsWith('...')) {
-        startLine = checkLine - 1;
-      }
-    }
-  } else {
-    if (startLine > 0) {
-      const prev = cmEditor.getLine(startLine - 1).trim();
-      if (prev.match(/^#{1,4}\s+(.*)$/)) {
-        startLine = startLine - 1;
-      }
-    }
+
+    const endLineLength = cmEditor.getLine(endLine) ? cmEditor.getLine(endLine).length : 0;
+
+    cmEditor.replaceRange(
+      newTableCode,
+      { line: actualStartLine, ch: 0 },
+      { line: endLine, ch: endLineLength }
+    );
+
+    renderDocument();
+    setTimeout(() => {
+      updateTableBadges();
+      updatePlantUmlStatus();
+    }, 60);
+    queueSaveToIndexedDB();
   }
 
-  const endLineLength = cmEditor.getLine(endLine) ? cmEditor.getLine(endLine).length : 0;
-
-  cmEditor.replaceRange(
-    newTableCode,
-    { line: startLine, ch: 0 },
-    { line: endLine, ch: endLineLength }
-  );
-
   closeModal('tableEditorModal');
-  renderDocument();
-  setTimeout(() => {
-    updateTableBadges();
-    updatePlantUmlStatus();
-  }, 60);
-  queueSaveToIndexedDB();
-
   showToast("Table updated successfully!");
 }
 
@@ -1670,15 +1735,44 @@ function processTableFloatingButtons() {
     domTable.dataset.editButtonAdded = "true";
 
     const btnContainer = document.createElement('div');
-    btnContainer.className = 'flex items-center gap-2 mt-2 mb-2 select-none';
+    btnContainer.className = 'flex items-center gap-1.5 mt-2 mb-2 select-none';
     btnContainer.innerHTML = `
-      <button class="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 font-sans text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm" title="Edit Table in Visual Spreadsheet Editor">
-        <i class="fa-solid fa-table-cells"></i>
-        <span>Edit Table</span>
-      </button>
+      <div class="inline-flex items-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-800/95 p-0.5 shadow-xs text-xs font-sans">
+        <button class="btn-table-choice px-2 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold flex items-center gap-1.5 transition cursor-pointer" title="Edit Table (Choose Spreadsheet or Formatter)">
+          <i class="fa-solid fa-pen-to-square text-indigo-500 text-[11px]"></i>
+          <span>Edit Table</span>
+        </button>
+        <span class="w-[1px] h-3.5 bg-slate-200 dark:bg-slate-700 mx-0.5"></span>
+        <button class="btn-table-spreadsheet px-2 py-1 rounded-md hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 font-semibold flex items-center gap-1 transition cursor-pointer" title="Open in Spreadsheet Editor (Excel style)">
+          <i class="fa-solid fa-file-excel text-[11px]"></i>
+          <span>Spreadsheet</span>
+        </button>
+        <button class="btn-table-format px-2 py-1 rounded-md hover:bg-blue-50 dark:hover:bg-blue-950/40 text-blue-700 dark:text-blue-400 font-semibold flex items-center gap-1 transition cursor-pointer" title="Open in DocCraft Layout Formatter">
+          <i class="fa-solid fa-sliders text-[11px]"></i>
+          <span>Format</span>
+        </button>
+      </div>
     `;
 
-    btnContainer.querySelector('button').onclick = (e) => {
+    btnContainer.querySelector('.btn-table-choice').onclick = (e) => {
+      e.preventDefault();
+      if (typeof showTableEditorChoice === 'function') {
+        showTableEditorChoice(parsedTbl);
+      } else {
+        openTableVisualEditor(parsedTbl);
+      }
+    };
+
+    btnContainer.querySelector('.btn-table-spreadsheet').onclick = (e) => {
+      e.preventDefault();
+      if (typeof openTableInSpreadsheet === 'function') {
+        openTableInSpreadsheet(parsedTbl);
+      } else {
+        openTableVisualEditor(parsedTbl);
+      }
+    };
+
+    btnContainer.querySelector('.btn-table-format').onclick = (e) => {
       e.preventDefault();
       openTableVisualEditor(parsedTbl);
     };
