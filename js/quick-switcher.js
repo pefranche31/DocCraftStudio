@@ -242,6 +242,14 @@ function appendQuickActions(query) {
     },
     {
       type: 'action',
+      id: 'act-table-library',
+      title: 'Table Library & Spreadsheet (x-spreadsheet)',
+      desc: 'Manage attached tables, scan document tables, and edit in Excel spreadsheet',
+      icon: 'fa-solid fa-table-cells text-indigo-500',
+      action: () => openTableLibraryModal()
+    },
+    {
+      type: 'action',
       id: 'act-tasks-hub',
       title: 'Global Tasks Hub',
       desc: 'View, filter, and check off all to-dos across all notes',

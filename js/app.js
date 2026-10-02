@@ -185,7 +185,29 @@ Object.assign(window, {
   setDarkThemeVariant,
   setLightThemeVariant,
   applyThemeVariants,
-  syncThemeVariantRadios
+  syncThemeVariantRadios,
+  openTableLibraryModal,
+  closeTableLibraryModal,
+  scanDocumentTables,
+  renderTableLibraryUI,
+  createNewLibraryTable,
+  deleteLibraryTable,
+  insertLibraryTableIntoEditor,
+  exportLibraryTableCSV,
+  importLibraryTableCSV,
+  openLibraryTableInVisualEditor,
+  openSpreadsheetEditor,
+  saveSpreadsheetEditor,
+  closeSpreadsheetEditor,
+  openTableInSpreadsheet,
+  showTableEditorChoice,
+  chooseTableEditor,
+  setSpreadsheetRowHeightPreset,
+  promptSpreadsheetCustomRowHeight,
+  autoFitSpreadsheetRowHeight,
+  setSpreadsheetColWidthPreset,
+  promptSpreadsheetCustomColWidth,
+  autoFitSpreadsheetColWidth
 });
 
 // Initialize with system preference or theme storage

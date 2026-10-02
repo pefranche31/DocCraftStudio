@@ -8,7 +8,7 @@ var dbInstance = null;
 function initDB() {
   return new Promise((resolve, reject) => {
     // Use 'DocCraftDB_v3' to bypass any locked sessions or version mismatches
-    const request = indexedDB.open('DocCraftDB_v3', 3);
+    const request = indexedDB.open('DocCraftDB_v3', 4);
 
     request.onupgradeneeded = (e) => {
       const db = e.target.result;
@@ -27,6 +27,12 @@ function initDB() {
       if (oldVersion < 3) {
         if (!db.objectStoreNames.contains('config')) {
           db.createObjectStore('config', { keyPath: 'key' });
+        }
+      }
+      if (oldVersion < 4) {
+        if (!db.objectStoreNames.contains('tables')) {
+          const tableStore = db.createObjectStore('tables', { keyPath: 'id' });
+          tableStore.createIndex('docId', 'docId', { unique: false });
         }
       }
     };
@@ -83,7 +89,11 @@ function dbSaveDocument(docObj) {
 function dbDeleteDocument(id) {
   return new Promise((resolve, reject) => {
     if (!dbInstance) return resolve();
-    const tx = dbInstance.transaction(['documents', 'attachments'], 'readwrite');
+    const stores = ['documents', 'attachments'];
+    if (dbInstance.objectStoreNames.contains('tables')) {
+      stores.push('tables');
+    }
+    const tx = dbInstance.transaction(stores, 'readwrite');
     const docStore = tx.objectStore('documents');
     const attachStore = tx.objectStore('attachments');
     
@@ -98,7 +108,23 @@ function dbDeleteDocument(id) {
         attachStore.delete(cursor.primaryKey);
         cursor.continue();
       } else {
-        resolve();
+        if (dbInstance.objectStoreNames.contains('tables')) {
+          const tableStore = tx.objectStore('tables');
+          const tableIndex = tableStore.index('docId');
+          const tblReq = tableIndex.openCursor(IDBKeyRange.only(id));
+          tblReq.onsuccess = (ev) => {
+            const tblCursor = ev.target.result;
+            if (tblCursor) {
+              tableStore.delete(tblCursor.primaryKey);
+              tblCursor.continue();
+            } else {
+              resolve();
+            }
+          };
+          tblReq.onerror = () => resolve();
+        } else {
+          resolve();
+        }
       }
     };
     request.onerror = () => reject(request.error);
@@ -192,6 +218,75 @@ function dbDeleteAttachment(id) {
     const request = store.delete(id);
     request.onsuccess = () => resolve();
     request.onerror = () => reject(request.error);
+  });
+}
+
+function dbGetTablesByDoc(docId) {
+  return new Promise((resolve, reject) => {
+    if (!dbInstance || !dbInstance.objectStoreNames.contains('tables')) return resolve([]);
+    try {
+      const tx = dbInstance.transaction('tables', 'readonly');
+      const store = tx.objectStore('tables');
+      const index = store.index('docId');
+      const request = index.getAll(IDBKeyRange.only(docId));
+      request.onsuccess = () => {
+        const list = request.result || [];
+        list.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+        resolve(list);
+      };
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      console.warn("dbGetTablesByDoc error:", err);
+      resolve([]);
+    }
+  });
+}
+
+function dbGetTable(id) {
+  return new Promise((resolve, reject) => {
+    if (!dbInstance || !dbInstance.objectStoreNames.contains('tables')) return resolve(null);
+    try {
+      const tx = dbInstance.transaction('tables', 'readonly');
+      const store = tx.objectStore('tables');
+      const request = store.get(id);
+      request.onsuccess = () => resolve(request.result || null);
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      console.warn("dbGetTable error:", err);
+      resolve(null);
+    }
+  });
+}
+
+function dbSaveTable(tableObj) {
+  return new Promise((resolve, reject) => {
+    if (!dbInstance || !dbInstance.objectStoreNames.contains('tables')) return resolve(tableObj);
+    try {
+      const tx = dbInstance.transaction('tables', 'readwrite');
+      const store = tx.objectStore('tables');
+      const request = store.put(tableObj);
+      request.onsuccess = () => resolve(tableObj);
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      console.warn("dbSaveTable error:", err);
+      resolve(tableObj);
+    }
+  });
+}
+
+function dbDeleteTable(id) {
+  return new Promise((resolve, reject) => {
+    if (!dbInstance || !dbInstance.objectStoreNames.contains('tables')) return resolve();
+    try {
+      const tx = dbInstance.transaction('tables', 'readwrite');
+      const store = tx.objectStore('tables');
+      const request = store.delete(id);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      console.warn("dbDeleteTable error:", err);
+      resolve();
+    }
   });
 }
 
